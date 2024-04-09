@@ -1,0 +1,31 @@
+img{
+    display: none;
+}
+
+#Game_canvas{
+    border: 3px solid; 
+    align-content: center;
+    height: 70svh;
+    width: 70%;
+    background-color: grey;
+}
+
+#Text_canvas{
+    border: 3px solid; 
+    align-content: center;
+    width: 70%;
+    height: 16svh;
+    background-color: white;
+}
+
+#Container{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+body{
+    background-image: url(Bilder/Website\ background.png);
+    background-size: 40%;
+}
+
