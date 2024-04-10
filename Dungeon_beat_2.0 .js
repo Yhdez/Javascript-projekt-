@@ -6,22 +6,34 @@ canvas.height = window.innerHeight
 namn.innerHTML ="Dungeon Beat 2.0"
 const ctx = canvas.getContext("2d")
 const spelkaraktären_bild = document.getElementById("Spelkaraktär")
-let Facing = "upward"
+var Facing = "Downward"
 
-function Karaktär(type,sy,sx,swidth,sheight,x,y,width,height) {
+
+function Karaktär(type,swidth,sheight,x,y,width,height) {
     this.type = type
     this.width = width;
     this.height = height;
     this.x = x;
     this.y = y;
-    this.sy = sy;
-    this.sx = sx;
     this.swidth = swidth;
     this.sheight = sheight;
     this.update = function (){
-        if (Facing === "upward"){
-          ctx.drawImage(this.type,this.sy,this.sx,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
-          console.log("Updatterar")
+        if (Facing === "Downward"){
+          this.sy = 0;
+          this.sx = 0;
+          ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+        }
+        if (Facing === "Upward"){
+            this.sy = 800
+            ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+        }
+        if (Facing === "Right"){
+            this.sy = 1645
+            ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+        }
+        if (Facing === "Left"){
+            this.sy = 2615
+            ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
         }
     }
 }
@@ -31,7 +43,7 @@ document.onkeydown = function(e){
         case "w":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)   
             Spelkaraktär.y -= 10
-            let Facing = "upward"
+            Facing = "Upward"
             console.log(Spelkaraktär.y)
             Spelkaraktär.update()
     }
@@ -39,7 +51,7 @@ document.onkeydown = function(e){
         case "s":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Spelkaraktär.y += 10
-            let Facing = "downward"
+            Facing = "Downward"
             console.log(Spelkaraktär.y)
             Spelkaraktär.update()
     }
@@ -47,6 +59,7 @@ document.onkeydown = function(e){
         case "d":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Spelkaraktär.x += 10
+            Facing = "Right"
             console.log(Spelkaraktär.x)
             Spelkaraktär.update()
     }
@@ -54,11 +67,11 @@ document.onkeydown = function(e){
         case "a":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Spelkaraktär.x -= 10
+            Facing = "Left"
             console.log(Spelkaraktär.x)
             Spelkaraktär.update()
     }
 }
 
-
-var Spelkaraktär = new Karaktär(spelkaraktären_bild, 120, 100, 650, 650, 300, 200, 100, 100);
+var Spelkaraktär = new Karaktär(spelkaraktären_bild, 780, 780, 300, 200, 150, 150);
 Spelkaraktär.update()
