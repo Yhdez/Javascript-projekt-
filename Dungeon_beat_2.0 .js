@@ -7,6 +7,7 @@ const ctx = Game_canvas.getContext("2d")
 const Warrior_spelkaraktären_bild = document.getElementById("Warrior")
 const Health_bild = document.getElementById("Health")
 var Facing = "Downward"
+var Current_room = "Main_Dungeon"
 
 var Player_animation_active = false
 var Monster_Current_frame = undefined
@@ -19,6 +20,7 @@ var Assigned_y_position = undefined
 var Time_when_activated = null
 
 var Current_monster = undefined
+var invinciblity_frame_mode = "inactive"
 
 function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
     this.type = type
@@ -34,44 +36,44 @@ function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
     this.update = function (){
         if (Facing === "Downward"){
           this.sy = 0;
-          ctx.drawImage(this.type,this.sx ,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
         }
-        if (Facing === "Upward"){
+        else if (Facing === "Upward"){
             this.sy = 700
-            ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
         }
-        if (Facing === "Right"){
+        else if (Facing === "Right"){
             this.sy = 1360
-            ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
         }
-        if (Facing === "Left"){
+        else if (Facing === "Left"){
             this.sy = 2160
-            ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
         }
+        if (invinciblity_frame_mode === "Active"){
+            ctx.globalAlpha = 0.25
+            ctx.drawImage(this.type,this.sx ,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+            ctx.globalAlpha = 1
+            
+        }
+        else{ctx.drawImage(this.type,this.sx ,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)}
     }
     this.Monster_update = function(){
         ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
         Spelkaraktär.update()
         ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+        Battle_assets.update()
         Update_and_Assign_Room()
     }
 }
 
-function Projectile(radius,x,y,color){
-    this.radius = radius
-    this.color = color
+function Assets(type,width,height,x,y){
+    this.type = type
+    this.width = width
+    this.height = height
     this.x = x
     this.y = y
     this.update = function (){
-        ctx.save() //Sparar tidigare inställningar för skalan
-        ctx.scale(1,0.75) //För att se till att cirkeln inte är oval
-        ctx.beginPath()
-        ctx.arc(this.x,this.y,this.radius,0,2*Math.PI)
-        ctx.fillStyle = this.color
-        ctx.fill()
-        ctx.restore() //Återställer till tidigare inställningar
+        ctx.drawImage(this.type,this.x,this.y,this.width,this.height)
     }
 }
+
 
 function Room(type,wall_type,Top_border,Bottom_border,Left_border,right_border){
    this.type = type
@@ -89,12 +91,16 @@ function Room(type,wall_type,Top_border,Bottom_border,Left_border,right_border){
 function is_player_hit(){
     if(Current_monster.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Current_monster.x + Game_canvas.width*0.2 >  Spelkaraktär.x + Game_canvas.width*0.125){
         if (Current_monster.y + Game_canvas.height*0.02 < Spelkaraktär.y + Game_canvas.height*0.11 && Current_monster.y + Game_canvas.height*0.4 >  Spelkaraktär.y + Game_canvas.height*0.28){
-            if (Date.now() - Time_when_activated >= 4000){
+            if (Date.now() - Time_when_activated >= 1700){
               console.log("Träffad")
               Spelkaraktär.health -= 1
               Check_health()
               Time_when_activated = Date.now()
-              Spelkaraktär.type.style.opacity = "0.5"          
+              invinciblity_frame_mode = "Active"
+              setTimeout(Turn_of_invincibilty_frame,1600)
+              function Turn_of_invincibilty_frame(){
+                invinciblity_frame_mode = "Inactive"
+              }
             }
         }
     }
@@ -104,7 +110,7 @@ function is_player_hit(){
 function Monster_encounter(monster_type){
     clearInterval(Monster_interval)
   if (monster_type.type === document.getElementById("Devil")){ 
-      Idle()
+      requestAnimationFrame(Idle)
       setTimeout(Run_and_swing,(Math.random() * 4000) + 2000)
       setTimeout(Devil_Projectile,9000)
       if (monster_type.health > 0){
@@ -120,7 +126,7 @@ function Monster_encounter(monster_type){
         ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
         if (Monster_animation_times_repeated === 1){
             clearInterval(Monster_interval)
-            Idle()
+            requestAnimationFrame(Idle)
         }
         monster_type.sx = 0
         monster_type.Monster_update()
@@ -145,7 +151,7 @@ function Monster_encounter(monster_type){
     Monster_Frame_to_end_with = 7
     Monster_animation_times_repeated = 1
     clearInterval(Monster_interval)
-    Monster_interval = setInterval(Monster_animation,200)
+    Monster_interval = setInterval(Monster_animation,150)
   }
 
   function Go_to_random_position(){
@@ -212,37 +218,46 @@ function Monster_encounter(monster_type){
     Monster_animation_times_repeated = 1
     clearInterval(Monster_interval)
     Monster_interval = setInterval(Monster_animation,120)
-    var Devil_projectile_1 = new Projectile(16,300,300,"red")
-    var Devil_projectile_2 = new Projectile(16,0,0,"red")
-    var Devil_projectile_3 = new Projectile(16,0,0,"red")
-    var Monster_projectile = setInterval(Fire_projectile,100)
+    var Devil_Projectile_1 = new Assets(document.getElementById("Devil_projectile"),30,22,monster_type.x +115,monster_type.y+100)
+    var Devil_Projectile_2 = new Assets(document.getElementById("Devil_projectile"),30,22,monster_type.x+300,monster_type.y)
+    var Devil_Projectile_3 = new Assets(document.getElementById("Devil_projectile"),30,22,monster_type.x-15,monster_type.y)
+    Battle_assets = Devil_Projectile_1
+    Battle_assets = Devil_Projectile_1
+    Battle_assets = Devil_Projectile_1
+    Monster_projectile_interval = setInterval(devil_assign_projectile,100)
 
-    function Fire_projectile(){
-        ctx.clearRect(Devil_projectile_1.x,Devil_projectile_1.y,Devil_projectile_1.radius *2,Devil_projectile_2.radius*2)
-        Devil_projectile_1.y += 4
-        Devil_projectile_2.y -= 2
-        Devil_projectile_2.x -= 2
-        Devil_projectile_3.y += 2
-        Devil_projectile_3.x += 2
-        Devil_projectile_1.update()
-        Devil_projectile_2.update()
-        Devil_projectile_3.update()
-        if (Devil_projectile_1 <= 0){
-            clearInterval(Monster_projectile)
-            return
+    function devil_assign_projectile(){
+        Fire_projectile(Devil_Projectile_1,0,14,-10,0,0,10)
+        Fire_projectile(Devil_Projectile_2,14,0,0,-10,10,0)
+        Fire_projectile(Devil_Projectile_3,-14,0,0,-10,10,0)
+        console.log("skjut")
+
+        if (Devil_Projectile_1.y > Game_canvas.height && Devil_Projectile_2.x > Game_canvas.width && Devil_Projectile_3.x < 0){
+            clearInterval(Monster_projectile_interval)
+            console.log("slut")
         }
     }
-  }
+
+    }
+
+    function Fire_projectile(type, speed_x, speed_y, y_space, x_space, width_space, height_space){ //space variablen är för att se till att clearrect() tar bort hela bilden
+        ctx.clearRect(type.x +x_space,type.y + y_space,type.width+width_space,type.height+height_space)
+        type.x += speed_x
+        type.y += speed_y
+        type.update()
+}
+
 }
 
 function Update_and_Assign_Room(){
-    if (Room.type = "Main_Dungeon_walls"){Main_dungeon.update();;return Main_dungeon}
+    if (Current_room === "Main_Dungeon"){Main_dungeon.update();;return Main_dungeon}
 }
 
 function assign_monster(type){
    if (type === 1){
     var Devil = new Karaktär(document.getElementById("Devil"), 600, 600, 600, 400, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
     Current_monster = Devil
+    console.log("satt Djävul")
     return Devil
    }
 }
@@ -307,6 +322,7 @@ document.onkeydown = function(e){
     switch (e.key) {
         case "z":
             Player_animation("Attack")
+            is_player_hit()
     }
 }
 
@@ -341,13 +357,23 @@ function Player_animation(Character_action){
             return
         }
     }
-    Player_animation_active = true
+
     var Interval = setInterval(animate,Time_To_animate)
+    Player_animation_active = true
 
 }
+    // Del som startar om sidan ifall den är inaktiv för länge, för att kompensera för liten användning av requestanimationframe()
+    function Reload_game(){location.reload()}
+    function reset_timer(){clearTimeout(Timeoutid);Timeoutid = setTimeout(Reload_game,30000)}
+    var Timeoutid = setTimeout(Reload_game,25000)
+    document.addEventListener("mousemove",reset_timer)
+    document.addEventListener("scroll",reset_timer)
+    document.addEventListener("keydown",reset_timer)
+
+    var Battle_assets = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, 300, 200, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
     Spelkaraktär.update()
     Check_health()
     var Main_dungeon = new Room("Bilder/Main_Dungeon_background.png",document.getElementById("Main_Dungeon_walls"),140,430,-35,1090)
     Main_dungeon.update()
-    Monster_encounter(assign_monster(1))
+    requestAnimationFrame(Monster_encounter.bind(null,assign_monster(1)))
