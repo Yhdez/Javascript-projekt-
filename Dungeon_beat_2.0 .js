@@ -10,6 +10,8 @@ var Facing = "Downward"
 var Current_room = "Main_Dungeon"
 
 var Player_animation_active = false
+var player_attack_active = false
+
 var Monster_Current_frame = undefined
 var Monster_Frame_to_end_with = undefined
 var Monster_interval = undefined
@@ -17,10 +19,12 @@ var Monster_walking_interval = undefined
 var Monster_animation_times_repeated = undefined
 var Asssigned_x_position = undefined
 var Assigned_y_position = undefined
-var Time_when_activated = null
+var Time_when_invincibility_frame_activated = null
+var Time_when_enemy_invincibility_frame_activated = null
 
 var Current_monster = undefined
 var invinciblity_frame_mode = "inactive"
+var enemy_invinicbility_frame_mode = "inactive"
 
 function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
     this.type = type
@@ -36,15 +40,28 @@ function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
     this.update = function (){
         if (Facing === "Downward"){
           this.sy = 0;
+          Player_attack.sy = 340
+          Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.02
+          Player_attack.y = Spelkaraktär.y + Game_canvas.height*0.15
+
         }
         else if (Facing === "Upward"){
             this.sy = 700
+            Player_attack.sy = -20          
+            Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.02
+            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.1
         }
         else if (Facing === "Right"){
             this.sy = 1360
+            Player_attack.sy = 680
+            Player_attack.x = Spelkaraktär.x + Game_canvas.width*0.09
+            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.075
         }
         else if (Facing === "Left"){
             this.sy = 2160
+            Player_attack.sy = 1100
+            Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.1
+            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.08
         }
         if (invinciblity_frame_mode === "Active"){
             ctx.globalAlpha = 0.25
@@ -57,20 +74,36 @@ function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
     this.Monster_update = function(){
         ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
         Spelkaraktär.update()
-        ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
-        Battle_assets.update()
+        if (enemy_invinicbility_frame_mode === "Active"){
+            ctx.globalAlpha = 0.1
+            ctx.drawImage(this.type,this.sx ,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+            ctx.globalAlpha = 1
+        }
+        else{ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)}
+        if(player_attack_active === true){Player_attack.update_with_s()}
+        Monster_projectile_asset.update()
         Update_and_Assign_Room()
     }
 }
 
-function Assets(type,width,height,x,y){
+function Assets(type,x,y,width,height,swidth,sheight,sx,sy){
     this.type = type
     this.width = width
     this.height = height
     this.x = x
     this.y = y
-    this.update = function (){
-        ctx.drawImage(this.type,this.x,this.y,this.width,this.height)
+    this.swidth = swidth
+    this.sheight = sheight
+    this.sx = sx
+    this.sy = sy
+    this.update = function (){;
+    Spelkaraktär.update()
+    ctx.drawImage(this.type,this.x,this.y,this.width,this.height)
+    Update_and_Assign_Room()
+    }
+    this.update_with_s = function(){
+    ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
+    Update_and_Assign_Room()
     }
 }
 
@@ -89,32 +122,61 @@ function Room(type,wall_type,Top_border,Bottom_border,Left_border,right_border){
 }
 
 function is_player_hit(){
+    //Ifall träffad av monster
     if(Current_monster.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Current_monster.x + Game_canvas.width*0.2 >  Spelkaraktär.x + Game_canvas.width*0.125){
         if (Current_monster.y + Game_canvas.height*0.02 < Spelkaraktär.y + Game_canvas.height*0.11 && Current_monster.y + Game_canvas.height*0.4 >  Spelkaraktär.y + Game_canvas.height*0.28){
-            if (Date.now() - Time_when_activated >= 1700){
-              console.log("Träffad")
-              Spelkaraktär.health -= 1
-              Check_health()
-              Time_when_activated = Date.now()
-              invinciblity_frame_mode = "Active"
-              setTimeout(Turn_of_invincibilty_frame,1600)
-              function Turn_of_invincibilty_frame(){
-                invinciblity_frame_mode = "Inactive"
-              }
+            hit()
+    }
+    }
+    else if(Monster_projectile_asset.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Monster_projectile_asset.x + Game_canvas.width*0.2>  Spelkaraktär.x + Game_canvas.width*0.125){
+        if (Monster_projectile_asset.y + Game_canvas.height*0.01 < Spelkaraktär.y + Game_canvas.height*0.11 && Monster_projectile_asset.y + Game_canvas.height*0.2 >  Spelkaraktär.y + Game_canvas.height*0.28){
+            hit()
+    }
+    }
+    function hit(){
+        if (Date.now() - Time_when_invincibility_frame_activated >= 1700){
+            console.log("Träffad")
+            Spelkaraktär.health -= 1
+            Check_health()
+            Time_when_invincibility_frame_activated = Date.now()
+            invinciblity_frame_mode = "Active"
+            setTimeout(Turn_of_invincibilty_frame,1600)
+            function Turn_of_invincibilty_frame(){
+              invinciblity_frame_mode = "Inactive"
             }
-        }
+          }
+
     }
     return
+}
+
+function is_enemy_hit(){
+    console.log(Player_attack.y)
+    if(Player_attack.x + Game_canvas.width*0.04 < Current_monster.x + Game_canvas.width*0.125 && Player_attack.x + Game_canvas.width*0.08 > Current_monster.x + Game_canvas.width*0.){
+        if (Player_attack.y + Game_canvas.height*0.03 < Current_monster.y + Game_canvas.height*0.16 && Player_attack.y + Game_canvas.height*0.15 >   Current_monster.y + Game_canvas.height*0.07){
+            console.log("Monster träffad")
+            if (Date.now() - Time_when_enemy_invincibility_frame_activated >= 500){
+                ("monster verkligen träffat")
+                Current_monster.health -= 1
+                Time_when_invincibility_frame_activated = Date.now()
+                enemy_invinicbility_frame_mode = "Active"
+                setTimeout(Turn_of_invincibilty_frame,400)
+                function Turn_of_invincibilty_frame(){
+                  enemy_invinicbility_frame_mode = "Inactive"
+                }
+              }             
+    }
+}
 }
 
 function Monster_encounter(monster_type){
     clearInterval(Monster_interval)
   if (monster_type.type === document.getElementById("Devil")){ 
       requestAnimationFrame(Idle)
-      setTimeout(Run_and_swing,(Math.random() * 4000) + 2000)
-      setTimeout(Devil_Projectile,9000)
+      setTimeout(Run_and_swing,(Math.random() * 1000) + 1500)
+      setTimeout(Devil_Projectile,6000)
       if (monster_type.health > 0){
-        setTimeout(Monster_encounter.bind(null,monster_type),17000)
+        setTimeout(Monster_encounter.bind(null,monster_type),8500)
       }
  }
   function Monster_animation(){
@@ -218,19 +280,15 @@ function Monster_encounter(monster_type){
     Monster_animation_times_repeated = 1
     clearInterval(Monster_interval)
     Monster_interval = setInterval(Monster_animation,120)
-    var Devil_Projectile_1 = new Assets(document.getElementById("Devil_projectile"),30,22,monster_type.x +115,monster_type.y+100)
-    var Devil_Projectile_2 = new Assets(document.getElementById("Devil_projectile"),30,22,monster_type.x+300,monster_type.y)
-    var Devil_Projectile_3 = new Assets(document.getElementById("Devil_projectile"),30,22,monster_type.x-15,monster_type.y)
-    Battle_assets = Devil_Projectile_1
-    Battle_assets = Devil_Projectile_1
-    Battle_assets = Devil_Projectile_1
+    var Devil_Projectile_1 = new Assets(document.getElementById("Devil_projectile"),monster_type.x+100 ,monster_type.y+100,30,22)
+    var Devil_Projectile_2 = new Assets(document.getElementById("Devil_projectile"),monster_type.x+200,monster_type.y+50,30,22)
+    var Devil_Projectile_3 = new Assets(document.getElementById("Devil_projectile"),monster_type.x,monster_type.y+50,30,22)
     Monster_projectile_interval = setInterval(devil_assign_projectile,100)
 
     function devil_assign_projectile(){
         Fire_projectile(Devil_Projectile_1,0,14,-10,0,0,10)
         Fire_projectile(Devil_Projectile_2,14,0,0,-10,10,0)
         Fire_projectile(Devil_Projectile_3,-14,0,0,-10,10,0)
-        console.log("skjut")
 
         if (Devil_Projectile_1.y > Game_canvas.height && Devil_Projectile_2.x > Game_canvas.width && Devil_Projectile_3.x < 0){
             clearInterval(Monster_projectile_interval)
@@ -242,8 +300,11 @@ function Monster_encounter(monster_type){
 
     function Fire_projectile(type, speed_x, speed_y, y_space, x_space, width_space, height_space){ //space variablen är för att se till att clearrect() tar bort hela bilden
         ctx.clearRect(type.x +x_space,type.y + y_space,type.width+width_space,type.height+height_space)
+        Monster_projectile_asset = type
         type.x += speed_x
         type.y += speed_y
+        is_player_hit()
+        monster_type.Monster_update()
         type.update()
 }
 
@@ -277,6 +338,8 @@ document.onkeydown = function(e){
             Facing = "Upward"
             Spelkaraktär.update()
             Current_monster.Monster_update()
+            if (player_attack_active === true){Player_attack.update_with_s()}
+            Monster_projectile_asset.update()
             is_player_hit()
             if (Spelkaraktär.y >= Update_and_Assign_Room().Top_border){
                 Player_animation("Walking")
@@ -289,6 +352,8 @@ document.onkeydown = function(e){
             Facing = "Downward"
             Spelkaraktär.update()
             Current_monster.Monster_update()
+            if (player_attack_active === true){Player_attack.update_with_s()}
+            Monster_projectile_asset.update()
             is_player_hit()
             if (Spelkaraktär.y <= Update_and_Assign_Room().Bottom_border ){
                 Player_animation("Walking")
@@ -301,6 +366,8 @@ document.onkeydown = function(e){
             Facing = "Right"
             Spelkaraktär.update()
             Current_monster.Monster_update()
+            if (player_attack_active === true){Player_attack.update_with_s()}
+            Monster_projectile_asset.update()
             is_player_hit()
             if (Spelkaraktär.x <= Update_and_Assign_Room().right_border ){
                 Player_animation("Walking")
@@ -313,6 +380,8 @@ document.onkeydown = function(e){
             Facing = "Left"
             Spelkaraktär.update()
             Current_monster.Monster_update()
+            if (player_attack_active === true){Player_attack.update_with_s()}
+            Monster_projectile_asset.update()
             is_player_hit()
             if (Spelkaraktär.x >= Update_and_Assign_Room().Left_border ){
                 Player_animation("Walking")
@@ -321,6 +390,7 @@ document.onkeydown = function(e){
     }
     switch (e.key) {
         case "z":
+            player_attack_active = true
             Player_animation("Attack")
             is_player_hit()
     }
@@ -331,13 +401,18 @@ function Player_animation(Character_action){
     if (Character_action === "Walking"){
         var Current_frame = 0
         var Frame_to_end_with = 3
-        var Time_To_animate = 200
+        var Interval = setInterval(animate,200)
     }
     if (Character_action === "Attack"){
         var Current_frame = 3
         var Frame_to_end_with = 8
         Spelkaraktär.sx = 1540
-        var Time_To_animate = 89
+        var slash_current_frame = -1
+        var slash_frame_to_end_with = 5
+        var Interval = setInterval(animate,89)
+        var Slash_interval = setInterval(slash_animation,100)
+        Player_attack.sx = 50
+
     }
     function animate(){
         Current_frame++
@@ -345,6 +420,7 @@ function Player_animation(Character_action){
         Spelkaraktär.sx = 770*Current_frame
         Spelkaraktär.update()
         Current_monster.Monster_update()
+        Monster_projectile_asset.update()
         Update_and_Assign_Room()
         if (Current_frame === Frame_to_end_with){
             clearInterval(Interval)
@@ -352,13 +428,28 @@ function Player_animation(Character_action){
             Spelkaraktär.sx = 0
             Spelkaraktär.update()
             Current_monster.Monster_update()
+            if (player_attack_active === true){Player_attack.update_with_s()}
+            Monster_projectile_asset.update()
             Player_animation_active = false
             Update_and_Assign_Room()
             return
         }
     }
+    function slash_animation(){ //Attack för warrior classen
+        slash_current_frame++
+        ctx.clearRect(Player_attack.x,Player_attack.y,Player_attack.width,Player_attack.height)
+        Player_attack.sx += 350
+        Spelkaraktär.update()
+        Current_monster.Monster_update()
+        Player_attack.update_with_s()
+        if (slash_current_frame === slash_frame_to_end_with){
+        clearInterval(Slash_interval)
+        player_attack_active = false
+        is_enemy_hit()
+        return
+        }
 
-    var Interval = setInterval(animate,Time_To_animate)
+    }
     Player_animation_active = true
 
 }
@@ -370,10 +461,12 @@ function Player_animation(Character_action){
     document.addEventListener("scroll",reset_timer)
     document.addEventListener("keydown",reset_timer)
 
-    var Battle_assets = new Assets(document.getElementById("Empty_image",0,0,0,0))
+     
     var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, 300, 200, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
-    Spelkaraktär.update()
-    Check_health()
+    var Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
+    var Player_attack = new Assets(document.getElementById("Slash"), 700, 100, Game_canvas.width*0.3/1.7, Game_canvas.height*0.3,350,480,50,-15)
     var Main_dungeon = new Room("Bilder/Main_Dungeon_background.png",document.getElementById("Main_Dungeon_walls"),140,430,-35,1090)
+    Check_health()
+    Spelkaraktär.update()
     Main_dungeon.update()
     requestAnimationFrame(Monster_encounter.bind(null,assign_monster(1)))
