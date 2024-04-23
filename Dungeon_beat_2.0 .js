@@ -42,26 +42,26 @@ function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
           this.sy = 0;
           Player_attack.sy = 340
           Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.02
-          Player_attack.y = Spelkaraktär.y + Game_canvas.height*0.15
+          Player_attack.y = Spelkaraktär.y + Game_canvas.height*0.11
 
         }
         else if (Facing === "Upward"){
             this.sy = 700
             Player_attack.sy = -20          
             Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.02
-            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.1
+            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.08
         }
         else if (Facing === "Right"){
             this.sy = 1360
             Player_attack.sy = 680
-            Player_attack.x = Spelkaraktär.x + Game_canvas.width*0.09
-            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.075
+            Player_attack.x = Spelkaraktär.x + Game_canvas.width*0.07
+            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.06
         }
         else if (Facing === "Left"){
             this.sy = 2160
             Player_attack.sy = 1100
-            Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.1
-            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.08
+            Player_attack.x = Spelkaraktär.x - Game_canvas.width*0.085
+            Player_attack.y = Spelkaraktär.y - Game_canvas.height*0.06
         }
         if (invinciblity_frame_mode === "Active"){
             ctx.globalAlpha = 0.25
@@ -82,6 +82,8 @@ function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
         else{ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)}
         if(player_attack_active === true){Player_attack.update_with_s()}
         Monster_projectile_asset.update()
+        Monster_projectile_asset_2.update()
+        Monster_projectile_asset_3.update()
         Update_and_Assign_Room()
     }
 }
@@ -178,11 +180,21 @@ function Monster_encounter(monster_type){
       if (monster_type.health > 0){
         setTimeout(Monster_encounter.bind(null,monster_type),8500)
       }
- }
+  }
+  if (monster_type.type === document.getElementById("Phantom")){
+    requestAnimationFrame(Idle)
+    Assigned_y_position = (Math.random() * 200) + 180
+    Asssigned_x_position = (Math.random() * 901) +30
+    setTimeout(Go_to_random_position(monster_type),3000)
+    setTimeout(shoot_following_projectile,7000)
+    if (monster_type.health > 0){
+        setTimeout(Monster_encounter.bind(null,monster_type),13000)
+      }
+  }
   function Monster_animation(){
     Monster_Current_frame++
     ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
-    monster_type.sx = 625 * Monster_Current_frame
+    monster_type.sx = 620 * Monster_Current_frame
     monster_type.Monster_update()
     if (Monster_Current_frame === Monster_Frame_to_end_with){
         ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
@@ -198,6 +210,7 @@ function Monster_encounter(monster_type){
 
   function Idle(){
     Monster_animation_times_repeated = "Indefinitely"
+    console.log("idle")
     monster_type.sy = 0
     Monster_Current_frame = -1
     Monster_Frame_to_end_with = 3
@@ -207,7 +220,7 @@ function Monster_encounter(monster_type){
   function Run_and_swing(){
     Assigned_y_position = (Math.random() * 200) + 180
     Asssigned_x_position = (Math.random() * 901) +30
-    Go_to_random_position()
+    Go_to_random_position(monster_type)
     monster_type.sy = 600
     Monster_Current_frame = -1
     Monster_Frame_to_end_with = 7
@@ -216,59 +229,80 @@ function Monster_encounter(monster_type){
     Monster_interval = setInterval(Monster_animation,150)
   }
 
-  function Go_to_random_position(){
-    if (monster_type.y <= Assigned_y_position){
-        if (monster_type.x <= Asssigned_x_position){Monster_walking_interval = setInterval(if_both_bigger_than_monster,100)}
+  function shoot_following_projectile(){
+    monster_type.sy = 600
+    console.log("shoot")
+    Monster_Current_frame = -1
+    Monster_Frame_to_end_with = 6
+    Monster_animation_times_repeated = 1
+    clearInterval(Monster_interval)
+    Monster_interval = setInterval(Monster_animation,150)
+    clearInterval(Monster_walking_interval)
+    Monster_projectile_asset = new Assets(document.getElementById("Phantom_projectile"),monster_type.x ,monster_type.y,30,22)
+    Go_to_random_position(Monster_projectile_asset)
+
+  }
+
+  function Go_to_random_position(sprite_to_move){
+    if (sprite_to_move.y <= Assigned_y_position){
+        if (sprite_to_move.x <= Asssigned_x_position){Monster_walking_interval = setInterval(if_both_bigger_than_monster,100)}
         else{Monster_walking_interval = setInterval(if_x_smaller_than_monster ,200)}
     }
     else{
-        if(monster_type <= Asssigned_x_position){Monster_walking_interval = setInterval(if_y_smaller_than_monster ,100)}
+        if(monster_type.x <= Asssigned_x_position){Monster_walking_interval = setInterval(if_y_smaller_than_monster ,100)}
         else{Monster_walking_interval = setInterval(if_both_smaller_than_monster ,150)}
     }
 
     function if_y_smaller_than_monster(){
-        if (monster_type.x >= Asssigned_x_position && monster_type.y <= Assigned_y_position){
+        if (sprite_to_move.x >= Asssigned_x_position && sprite_to_move.y <= Assigned_y_position){
             clearInterval(Monster_walking_interval)
             return
         }
-        ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
-        if(monster_type.x < Asssigned_x_position){monster_type.x += 15}
-        if (monster_type.y > Assigned_y_position){monster_type.y -= 15}
+        ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
+        if(sprite_to_move.x < Asssigned_x_position){sprite_to_move.x += 15}
+        if (sprite_to_move.y > Assigned_y_position){sprite_to_move.y -= 15}
         is_player_hit()
-        monster_type.Monster_update()
+        if (sprite_to_move === monster_type){monster_type.Monster_update()}
+        else{sprite_to_move.update()}
     }
     function if_x_smaller_than_monster(){
-        if (monster_type.x <= Asssigned_x_position && monster_type.y >= Assigned_y_position){
+        if (sprite_to_move.x <= Asssigned_x_position && sprite_to_move.y >= Assigned_y_position){
             clearInterval(Monster_walking_interval)
             return
         }
-        ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
-        if(monster_type.x > Asssigned_x_position){monster_type.x -= 15}
-        if (monster_type.y < Assigned_y_position){monster_type.y += 15}
+        ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
+        if(sprite_to_move.x > Asssigned_x_position){sprite_to_move.x -= 15}
+        if (sprite_to_move.y < Assigned_y_position){sprite_to_move.y += 15}
         is_player_hit()
-        monster_type.Monster_update()
+        if (sprite_to_move === monster_type){monster_type.Monster_update()}
+        else{sprite_to_move.update()}
+        
     }
     function if_both_smaller_than_monster(){
-        if (monster_type.x <= Asssigned_x_position && monster_type.y <= Assigned_y_position){
+        if (sprite_to_move.x <= Asssigned_x_position && sprite_to_move.y <= Assigned_y_position){
             clearInterval(Monster_walking_interval)
             return
         }
-        ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
-        if(monster_type.x > Asssigned_x_position){monster_type.x -= 15}
-        if (monster_type.y > Assigned_y_position){monster_type.y -= 15}
+        ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
+        if(sprite_to_move.x > Asssigned_x_position){sprite_to_move.x -= 15}
+        if (sprite_to_move.y > Assigned_y_position){sprite_to_move.y -= 15}
         is_player_hit()
-        monster_type.Monster_update()
+        if (sprite_to_move === monster_type){monster_type.Monster_update()}
+        else{sprite_to_move.update()}
+        
     }
     function if_both_bigger_than_monster(){
-        if (monster_type.x >= Asssigned_x_position && monster_type.y >= Assigned_y_position){
+        if (sprite_to_move.x >= Asssigned_x_position && sprite_to_move.y >= Assigned_y_position){
            clearInterval(Monster_walking_interval)
            return
     }
-        ctx.clearRect(monster_type.x,monster_type.y,monster_type.width,monster_type.height)
-        if(monster_type.x < Asssigned_x_position){monster_type.x += 15}
-        if (monster_type.y < Assigned_y_position){monster_type.y += 15}
+    ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
+        if(sprite_to_move.x < Asssigned_x_position){sprite_to_move.x += 15}
+        if (sprite_to_move.y < Assigned_y_position){sprite_to_move.y += 15}
         is_player_hit()
-        monster_type.Monster_update()
+        if (sprite_to_move === monster_type){monster_type.Monster_update()}
+        else{sprite_to_move.update()}
+        
     }
   }
 
@@ -280,17 +314,17 @@ function Monster_encounter(monster_type){
     Monster_animation_times_repeated = 1
     clearInterval(Monster_interval)
     Monster_interval = setInterval(Monster_animation,120)
-    var Devil_Projectile_1 = new Assets(document.getElementById("Devil_projectile"),monster_type.x+100 ,monster_type.y+100,30,22)
-    var Devil_Projectile_2 = new Assets(document.getElementById("Devil_projectile"),monster_type.x+200,monster_type.y+50,30,22)
-    var Devil_Projectile_3 = new Assets(document.getElementById("Devil_projectile"),monster_type.x,monster_type.y+50,30,22)
+    Monster_projectile_asset = new Assets(document.getElementById("Devil_projectile"),monster_type.x+100 ,monster_type.y+100,30,22)
+    Monster_projectile_asset_2 = new Assets(document.getElementById("Devil_projectile"),monster_type.x+200,monster_type.y+50,30,22)
+    Monster_projectile_asset_3 = new Assets(document.getElementById("Devil_projectile"),monster_type.x,monster_type.y+50,30,22)
     Monster_projectile_interval = setInterval(devil_assign_projectile,100)
 
     function devil_assign_projectile(){
-        Fire_projectile(Devil_Projectile_1,0,14,-10,0,0,10)
-        Fire_projectile(Devil_Projectile_2,14,0,0,-10,10,0)
-        Fire_projectile(Devil_Projectile_3,-14,0,0,-10,10,0)
+        Fire_projectile(Monster_projectile_asset,0,14,-10,0,0,10)
+        Fire_projectile(Monster_projectile_asset_2,14,0,0,-10,10,0)
+        Fire_projectile(Monster_projectile_asset_3,-14,0,0,-10,10,0)
 
-        if (Devil_Projectile_1.y > Game_canvas.height && Devil_Projectile_2.x > Game_canvas.width && Devil_Projectile_3.x < 0){
+        if (Monster_projectile_asset.y > Game_canvas.height && Monster_projectile_asset_2.x > Game_canvas.width && Monster_projectile_asset_3.x < 0){
             clearInterval(Monster_projectile_interval)
             console.log("slut")
         }
@@ -300,7 +334,6 @@ function Monster_encounter(monster_type){
 
     function Fire_projectile(type, speed_x, speed_y, y_space, x_space, width_space, height_space){ //space variablen är för att se till att clearrect() tar bort hela bilden
         ctx.clearRect(type.x +x_space,type.y + y_space,type.width+width_space,type.height+height_space)
-        Monster_projectile_asset = type
         type.x += speed_x
         type.y += speed_y
         is_player_hit()
@@ -321,6 +354,12 @@ function assign_monster(type){
     console.log("satt Djävul")
     return Devil
    }
+   if (type === 2){
+    var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, 600, 300, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
+    Current_monster = Phantom
+    console.log("satt phantom ")
+    return Phantom
+   }
 }
 
 function Check_health(){
@@ -340,6 +379,8 @@ document.onkeydown = function(e){
             Current_monster.Monster_update()
             if (player_attack_active === true){Player_attack.update_with_s()}
             Monster_projectile_asset.update()
+            Monster_projectile_asset_2.update()
+            Monster_projectile_asset_3.update()
             is_player_hit()
             if (Spelkaraktär.y >= Update_and_Assign_Room().Top_border){
                 Player_animation("Walking")
@@ -354,6 +395,8 @@ document.onkeydown = function(e){
             Current_monster.Monster_update()
             if (player_attack_active === true){Player_attack.update_with_s()}
             Monster_projectile_asset.update()
+            Monster_projectile_asset_2.update()
+            Monster_projectile_asset_3.update()
             is_player_hit()
             if (Spelkaraktär.y <= Update_and_Assign_Room().Bottom_border ){
                 Player_animation("Walking")
@@ -368,6 +411,8 @@ document.onkeydown = function(e){
             Current_monster.Monster_update()
             if (player_attack_active === true){Player_attack.update_with_s()}
             Monster_projectile_asset.update()
+            Monster_projectile_asset_2.update()
+            Monster_projectile_asset_3.update()
             is_player_hit()
             if (Spelkaraktär.x <= Update_and_Assign_Room().right_border ){
                 Player_animation("Walking")
@@ -382,6 +427,8 @@ document.onkeydown = function(e){
             Current_monster.Monster_update()
             if (player_attack_active === true){Player_attack.update_with_s()}
             Monster_projectile_asset.update()
+            Monster_projectile_asset_2.update()
+            Monster_projectile_asset_3.update()
             is_player_hit()
             if (Spelkaraktär.x >= Update_and_Assign_Room().Left_border ){
                 Player_animation("Walking")
@@ -410,7 +457,7 @@ function Player_animation(Character_action){
         var slash_current_frame = -1
         var slash_frame_to_end_with = 5
         var Interval = setInterval(animate,89)
-        var Slash_interval = setInterval(slash_animation,100)
+        var Slash_interval = setInterval(slash_animation,80)
         Player_attack.sx = 50
 
     }
@@ -420,7 +467,10 @@ function Player_animation(Character_action){
         Spelkaraktär.sx = 770*Current_frame
         Spelkaraktär.update()
         Current_monster.Monster_update()
+        if (player_attack_active === true){Player_attack.update_with_s()}
         Monster_projectile_asset.update()
+        Monster_projectile_asset_2.update()
+        Monster_projectile_asset_3.update()
         Update_and_Assign_Room()
         if (Current_frame === Frame_to_end_with){
             clearInterval(Interval)
@@ -430,6 +480,8 @@ function Player_animation(Character_action){
             Current_monster.Monster_update()
             if (player_attack_active === true){Player_attack.update_with_s()}
             Monster_projectile_asset.update()
+            Monster_projectile_asset_2.update()
+            Monster_projectile_asset_3.update()
             Player_animation_active = false
             Update_and_Assign_Room()
             return
@@ -464,6 +516,8 @@ function Player_animation(Character_action){
      
     var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, 300, 200, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
     var Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
+    var Monster_projectile_asset_2 = new Assets(document.getElementById("Empty_image",0,0,0,0))
+    var Monster_projectile_asset_3 = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Player_attack = new Assets(document.getElementById("Slash"), 700, 100, Game_canvas.width*0.3/1.7, Game_canvas.height*0.3,350,480,50,-15)
     var Main_dungeon = new Room("Bilder/Main_Dungeon_background.png",document.getElementById("Main_Dungeon_walls"),140,430,-35,1090)
     Check_health()
