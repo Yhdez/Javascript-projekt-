@@ -2,12 +2,12 @@ const Game_canvas = document.getElementById("Game_canvas")
 let namn = document.getElementById("Spelnamn")
 Game_canvas.width = window.innerWidth
 Game_canvas.height = window.innerHeight
-namn.innerHTML ="Dungeon Beat 2.0"
+
 const ctx = Game_canvas.getContext("2d")
 const Warrior_spelkaraktären_bild = document.getElementById("Warrior")
 const Health_bild = document.getElementById("Health")
 var Facing = "Downward"
-var Current_room = "Main_Dungeon"
+//var Current_room = "Main_Dungeon"
 
 var Player_animation_active = false
 var player_attack_active = false
@@ -25,6 +25,8 @@ var Time_when_enemy_invincibility_frame_activated = null
 var Current_monster = undefined
 var invinciblity_frame_mode = "inactive"
 var enemy_invinicbility_frame_mode = "inactive"
+
+var Player_is_touching_door = false
 
 function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
     this.type = type
@@ -99,11 +101,11 @@ function Assets(type,x,y,width,height,swidth,sheight,sx,sy){
     this.sy = sy
     this.update = function (){;
     ctx.drawImage(this.type,this.x,this.y,this.width,this.height)
-    Update_and_Assign_Room()
+    Current_room.update()
     }
     this.update_with_s = function(){
     ctx.drawImage(this.type,this.sx,this.sy,this.swidth,this.sheight,this.x,this.y,this.width,this.height)
-    Update_and_Assign_Room()
+    Current_room.update()
     }
 }
 
@@ -116,8 +118,11 @@ function Room(type,wall_type,Top_border,Bottom_border,Left_border,right_border){
    this.Left_border = Left_border
    this.right_border = right_border
    this.update = function (){
-        Game_canvas.style.backgroundImage = "url(" + type + ")";
         ctx.drawImage(wall_type,0,0,Game_canvas.width,Game_canvas.height)
+   }
+   this.update_entire_room = function(){
+    Game_canvas.style.backgroundImage = "url(" + type + ")";
+    ctx.drawImage(wall_type,0,0,Game_canvas.width,Game_canvas.height)
    }
 }
 
@@ -170,12 +175,22 @@ function is_enemy_hit(){
 }
 }
 
+function is_player_at_door(){
+    if (Spelkaraktär.x + Game_canvas.width*0.06 < Game_canvas.width*0.48 && Spelkaraktär.x + Game_canvas.width*0.2 > Game_canvas.width*0.55){
+        if (Spelkaraktär.y + Game_canvas.height*0.06 < Game_canvas.height*0.34 && Spelkaraktär.y + Game_canvas.height*0.2 > Game_canvas.height*0.24){
+            Player_is_touching_door = true
+        }
+        else{Player_is_touching_door = false}
+    }
+    else{Player_is_touching_door = false}
+}
+
 function Monster_encounter(monster_type){
     clearInterval(Monster_interval)
   if (monster_type.type === document.getElementById("Devil")){ 
       requestAnimationFrame(Idle)
       setTimeout(Run_and_swing,(Math.random() * 1000) + 1500)
-      setTimeout(Devil_Projectile,6000)
+      setTimeout(Devil_Projectile,7500)
       if (monster_type.health > 0){
         setTimeout(Monster_encounter.bind(null,monster_type),8500)
       }
@@ -348,18 +363,14 @@ function Monster_encounter(monster_type){
 
 }
 
-function Update_and_Assign_Room(){
-    if (Current_room === "Main_Dungeon"){Main_dungeon.update();;return Main_dungeon}
-}
-
 function assign_monster(type){
    if (type === 1){
-    var Devil = new Karaktär(document.getElementById("Devil"), 600, 600, 600, 400, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
+    var Devil = new Karaktär(document.getElementById("Devil"), 600, 600, Game_canvas.width*0.65, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
     Current_monster = Devil
     return Devil
    }
    if (type === 2){
-    var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, 600, 300, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
+    var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, Game_canvas.width*0.65, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
     Current_monster = Phantom
     return Phantom
    }
@@ -376,39 +387,43 @@ function Check_health(){
 document.onkeydown = function(e){
     switch (e.key){
         case "w":
+        case "ArrowUp":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Facing = "Upward"
-            if (Spelkaraktär.y >= Update_and_Assign_Room().Top_border){
+            if (Spelkaraktär.y >= Current_room.Top_border){
                 Player_animation("Walking")
-                Spelkaraktär.y -= 6
+                Spelkaraktär.y -= Game_canvas.height*0.01
             }
     }
     switch (e.key){
         case "s":
+        case "ArrowDown":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Facing = "Downward"
-            if (Spelkaraktär.y <= Update_and_Assign_Room().Bottom_border ){
+            if (Spelkaraktär.y <= Current_room.Bottom_border ){
                 Player_animation("Walking")
-                Spelkaraktär.y += 6
+                Spelkaraktär.y += Game_canvas.height*0.01
             }
     }
     switch (e.key){
         case "d":
+        case "ArrowRight":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Facing = "Right"
-            if (Spelkaraktär.x <= Update_and_Assign_Room().right_border ){
+            if (Spelkaraktär.x <= Current_room.right_border ){
                 Player_animation("Walking")
-                Spelkaraktär.x += 6
+                Spelkaraktär.x += Game_canvas.width*0.0045
             }
     }
     switch (e.key){
         case "a":
+        case "ArrowLeft":
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
             Facing = "Left"
 
-            if (Spelkaraktär.x >= Update_and_Assign_Room().Left_border ){
+            if (Spelkaraktär.x >= Current_room.Left_border ){
                 Player_animation("Walking")
-                Spelkaraktär.x -= 6
+                Spelkaraktär.x -= Game_canvas.width*0.0045
             }
     }
     switch (e.key) {
@@ -416,17 +431,26 @@ document.onkeydown = function(e){
             player_attack_active = true
             Player_animation("Attack")
     }
+    switch (e.key){ //Spelaren försöker att öppna en dörr
+        case "e":
+            if(Player_is_touching_door === true){
+                ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
+                Spelkaraktär.y = Game_canvas.height*0.8
+                Spelkaraktär.update()
+                Current_room = new Room("Bilder/library_background.png",document.getElementById("Library_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86)
+                Current_room.update_entire_room()
+            }
+    }
+    ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
     Spelkaraktär.update()
     Current_monster.Monster_update()
     if (player_attack_active === true){Player_attack.update_with_s()}
-    //Monster_projectile_asset.update()
-    //Monster_projectile_asset_2.update()
-    //Monster_projectile_asset_3.update()
+    is_player_at_door() //438 x  134 y
     is_player_hit(Current_monster)
     is_player_hit(Monster_projectile_asset)
     is_player_hit(Monster_projectile_asset_2)
     is_player_hit(Monster_projectile_asset_3)
-    Update_and_Assign_Room()
+    Current_room.update()
 }
 
 function Player_animation(Character_action){
@@ -457,7 +481,7 @@ function Player_animation(Character_action){
         Monster_projectile_asset.update()
         Monster_projectile_asset_2.update()
         Monster_projectile_asset_3.update()
-        Update_and_Assign_Room()
+        Current_room.update()
         if (Current_frame === Frame_to_end_with){
             clearInterval(Interval)
             ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
@@ -469,7 +493,7 @@ function Player_animation(Character_action){
             Monster_projectile_asset_2.update()
             Monster_projectile_asset_3.update()
             Player_animation_active = false
-            Update_and_Assign_Room()
+            Current_room.update()
             return
         }
     }
@@ -500,14 +524,15 @@ function Player_animation(Character_action){
     document.addEventListener("keydown",reset_timer)
 
      
-    var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, 300, 200, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
+    var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, Game_canvas.width*0.4, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
     var Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Monster_projectile_asset_2 = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Monster_projectile_asset_3 = new Assets(document.getElementById("Empty_image",0,0,0,0))
     
     var Player_attack = new Assets(document.getElementById("Slash"), 700, 100, Game_canvas.width*0.3/1.7, Game_canvas.height*0.3,350,480,50,-15)
-    var Main_dungeon = new Room("Bilder/Main_Dungeon_background.png",document.getElementById("Main_Dungeon_walls"),140,430,-35,1090)
+    var Current_room = new Room("Bilder/Main_Dungeon_background.png",document.getElementById("Main_Dungeon_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86) //Game_canvas.height = 559 och .width = 1280
+    // Room("Bilder/library_background.png",document.getElementById("Library_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86)
+    Current_room.update_entire_room()
     Check_health()
     Spelkaraktär.update()
-    Main_dungeon.update()
     requestAnimationFrame(Monster_encounter.bind(null,assign_monster(2)))
