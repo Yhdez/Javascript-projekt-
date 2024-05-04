@@ -1,27 +1,32 @@
+var Monster_Current_frame = undefined
+var Monster_Frame_to_end_with = undefined
+var Monster_interval = undefined
+var Monster_walking_interval = undefined
+var Monster_animation_times_repeated = undefined
+var Asssigned_x_position = undefined
+var Assigned_y_position = undefined
+var Monster_death_active = false
 
-Monster_death_active = false
 
-
-   function assign_monster(type){
+function assign_monster(type){
     if (type === 1){
-     var Devil = new Karaktär(document.getElementById("Devil"), 600, 600, Game_canvas.width*0.65, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,1)
+     var Devil = new Karaktär(document.getElementById("Devil"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,9)
      Current_monster = Devil
     }
     if (type === 2){
-     var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, Game_canvas.width*0.65, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,5)
+     var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,6)
      Current_monster = Phantom
     }
    }
-
 
 function Monster_encounter(){
     if(Current_monster.health > 0){
        clearInterval(Monster_interval)
      if (Current_monster.type === document.getElementById("Devil")){ 
-         requestAnimationFrame(Idle)
-         setTimeout(Run_and_swing,(Math.random() * 1000) + 1500)
-         setTimeout(Devil_Projectile,7500)
-         setTimeout(Monster_encounter.bind(null,Current_monster),9500)
+        requestAnimationFrame(Idle)
+        setTimeout(Run_and_swing,(Math.random() * 1000) + 1500)
+        setTimeout(Devil_Projectile,7500)
+        setTimeout(Monster_encounter.bind(null,Current_monster),9500)
 
      }
      if (Current_monster.type === document.getElementById("Phantom")){
@@ -63,7 +68,7 @@ function Monster_encounter(){
        clearInterval(Monster_walking_interval)
        Assigned_y_position = Spelkaraktär.y + Game_canvas.height*0.1
        Asssigned_x_position = Spelkaraktär.x + Game_canvas.width*0.08
-       Monster_projectile_asset = new Assets(document.getElementById("Phantom_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y-Game_canvas.height*0.005,Game_canvas.width*0.025,Game_canvas.height*0.045)
+       Monster_projectile_asset = new Assets(document.getElementById("Phantom_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y-Game_canvas.height*0.005,Game_canvas.width*0.023,Game_canvas.height*0.041)
        Go_to_random_position(Monster_projectile_asset,Game_canvas.width*0.024)
    
      }
@@ -146,9 +151,9 @@ function Monster_encounter(){
        Monster_animation_times_repeated = 1
        clearInterval(Monster_interval)
        Monster_interval = setInterval(Monster_animation,120)
-       Monster_projectile_asset = new Assets(document.getElementById("Devil_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.05,Game_canvas.width*0.025,Game_canvas.height*0.045)
-       Monster_projectile_asset_2 = new Assets(document.getElementById("Devil_projectile"),Current_monster.x+Game_canvas.width*0.1,Current_monster.y+Game_canvas.height*0.05,Game_canvas.width*0.025,Game_canvas.height*0.045)
-       Monster_projectile_asset_3 = new Assets(document.getElementById("Devil_projectile"),Current_monster.x+Game_canvas.width*0.1,Current_monster.y+Game_canvas.height*0.05,Game_canvas.width*0.025,Game_canvas.height*0.045)
+       Monster_projectile_asset = new Assets(document.getElementById("Devil_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.05,Game_canvas.width*0.023,Game_canvas.height*0.041)
+       Monster_projectile_asset_2 = new Assets(document.getElementById("Devil_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.05,Game_canvas.width*0.023,Game_canvas.height*0.041)
+       Monster_projectile_asset_3 = new Assets(document.getElementById("Devil_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.05,Game_canvas.width*0.023,Game_canvas.height*0.041)
        Monster_projectile_interval = setInterval(devil_assign_projectile,100)
    
        function devil_assign_projectile(){
@@ -176,7 +181,6 @@ function Monster_encounter(){
 
 
      function Monster_death(){
-       console.log("slut")
        Monster_death_active = true
        clearInterval(Monster_interval)
        Current_monster =  new Karaktär(document.getElementById("Death_animation"), 600, 600, Current_monster.x, Current_monster.y, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,0)
@@ -186,8 +190,9 @@ function Monster_encounter(){
        Monster_Current_frame = -1
        Monster_Frame_to_end_with = 6
        Monster_animation_times_repeated = 1
-       Monster_interval = setInterval(Monster_animation,150)
+       Monster_interval = setInterval(Monster_animation,100)
      }
+
      function Monster_animation(){
        Monster_Current_frame++
        ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
@@ -197,7 +202,7 @@ function Monster_encounter(){
            if (Monster_animation_times_repeated === 1){
                clearInterval(Monster_interval)
                if (Monster_death_active === false){requestAnimationFrame(Idle)}
-               else{return}
+               else{Current_monster = new Karaktär(document.getElementById("Empty_image"), 0, 0, 0, 0, 0, 0,0,0,0);Monster_death_active = false; return}
            }
            ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
            Current_monster.sx = 0
