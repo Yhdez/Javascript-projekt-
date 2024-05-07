@@ -7,6 +7,8 @@ const ctx = Game_canvas.getContext("2d")
 const Warrior_spelkaraktären_bild = document.getElementById("Warrior")
 var Facing = "Downward"
 var Health_bild = document.getElementById("Health")
+var Rooms_explored_counter = 1
+var Monster_defeated_counter = 0
 
 var Player_animation_active = false
 var player_attack_active = false
@@ -169,6 +171,8 @@ function is_enemy_hit(){
                 Time_when_invincibility_frame_activated = Date.now()
                 enemy_invinicbility_frame_mode = "Active"
                 setTimeout(Turn_of_invincibilty_frame,400)
+                ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
+                Current_monster.Monster_update()
                 function Turn_of_invincibilty_frame(){
                   enemy_invinicbility_frame_mode = "Inactive"
                 }
@@ -204,6 +208,8 @@ function Player_death(){
     ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
     Game_canvas.style.backgroundImage = "";
     Game_canvas.style.backgroundColor = "black";
+    Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0)  //För att monstret inte ska radera delar av game over scenen
+    Spelkaraktär = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0) //För att inte spelarens sprite ska radera delar av game over scenen
     tutorial()
 }
 
@@ -270,7 +276,9 @@ document.onkeydown = function(e){
                 Current_monster.Monster_update()
                 Current_room.update_entire_room()
                 assign_monster(Math.ceil((Math.random()*2)))
+                //assign_monster(3)
                 requestAnimationFrame(Monster_encounter)
+                Rooms_explored_counter ++
             }
     }
     switch (e.key){
@@ -374,7 +382,7 @@ function Player_animation(Character_action){
      
     var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, Game_canvas.width*0.4, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
     var Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0)
-    var Health_bar = new Assets(Health_bild,Game_canvas.width *0.78,-Game_canvas.height*0.02,Game_canvas.width*0.22,Game_canvas.height*0.34, Health_bild.width,sheight = Health_bild.height / 4.5)
+    var Health_bar = new Assets(Health_bild,Game_canvas.width *0.74,-Game_canvas.height*0.02,Game_canvas.width*0.26,Game_canvas.height*0.34, Health_bild.width,Health_bild.height / 4.5)
     var Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Monster_projectile_asset_2 = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Monster_projectile_asset_3 = new Assets(document.getElementById("Empty_image",0,0,0,0))

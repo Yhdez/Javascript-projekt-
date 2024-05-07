@@ -17,6 +17,10 @@ function assign_monster(type){
      var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,6)
      Current_monster = Phantom
     }
+    if (type === 3){
+      var Necromancer = new Karaktär(document.getElementById("Necromancer"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.38,0,0,20)
+      Current_monster = Necromancer
+    }
    }
 
 function Monster_encounter(){
@@ -34,8 +38,16 @@ function Monster_encounter(){
        Assigned_y_position = (Math.random() * Game_canvas.height*0.358) + Game_canvas.height*0.32
        Asssigned_x_position = (Math.random() * Game_canvas.width*0.7) + Game_canvas.width*0.0235
        setTimeout(Go_to_random_position(Current_monster,12),(Math.random() * 1000) + 1500)
-       setTimeout(shoot_following_projectile,(Math.random() * 1000) + 4500)
+       setTimeout(shoot_following_projectile.bind(null,"Phantom_projectile"),(Math.random() * 1000) + 4500)
        setTimeout(Monster_encounter.bind(null,Current_monster),11000)
+     }
+
+     if (Current_monster.type === document.getElementById("Necromancer")){
+          Idle()
+          setTimeout(shoot_following_projectile.bind(null,"Necromancer_projectile"),(Math.random() * 1000) + 2000)
+          setTimeout(Teleport,7500)
+          setTimeout(Necromancer_projectile,12000)
+          setTimeout(Monster_encounter.bind(null,Current_monster),16500)
      }
    
      function Idle(){
@@ -44,7 +56,7 @@ function Monster_encounter(){
        Monster_Current_frame = -1
        Monster_Frame_to_end_with = 3
        Monster_interval = setInterval(Monster_animation,150)
-     }
+      }
    
      function Run_and_swing(){
        Assigned_y_position = (Math.random() * Game_canvas.height*0.358) + Game_canvas.height*0.32
@@ -57,19 +69,46 @@ function Monster_encounter(){
        clearInterval(Monster_interval)
        Monster_interval = setInterval(Monster_animation,150)
      }
+
+     function Teleport(){
+      clearInterval(Monster_interval)
+      Current_monster.sy = 1100
+      Monster_Current_frame = -1
+      Monster_Frame_to_end_with = 4
+      Monster_animation_times_repeated = 1
+      Monster_interval = setInterval(Monster_animation,200)
+      setTimeout(switch_position,900)
+      function switch_position(){
+        ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
+        Current_monster.x = (Math.random() * Game_canvas.width*0.7) + Game_canvas.width*0.0235
+        Current_monster.y = (Math.random() * Game_canvas.height*0.358) + Game_canvas.height*0.32
+        Monster_Current_frame = 4
+        Monster_Frame_to_end_with = 7
+        Monster_animation_times_repeated = 1
+        clearInterval(Monster_interval)
+        Monster_interval = setInterval(Monster_animation,200)
+      }
+     }
    
-     function shoot_following_projectile(){
-       Current_monster.sy = 600
-       Monster_Current_frame = -1
-       Monster_Frame_to_end_with = 6
+     function shoot_following_projectile(type_of_projectile){
+      if (Current_monster.type === document.getElementById("Phantom")){
+        Current_monster.sy = 600
+        Monster_Current_frame = -1
+        Monster_Frame_to_end_with = 6
+      }
+      if (Current_monster.type === document.getElementById("Necromancer")){
+        Current_monster.sy = 550
+        Monster_Current_frame = -1
+        Monster_Frame_to_end_with = 5
+      }
        Monster_animation_times_repeated = 1
        clearInterval(Monster_interval)
        Monster_interval = setInterval(Monster_animation,150)
        clearInterval(Monster_walking_interval)
        Assigned_y_position = Spelkaraktär.y + Game_canvas.height*0.1
        Asssigned_x_position = Spelkaraktär.x + Game_canvas.width*0.08
-       Monster_projectile_asset = new Assets(document.getElementById("Phantom_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y-Game_canvas.height*0.005,Game_canvas.width*0.023,Game_canvas.height*0.041)
-       Go_to_random_position(Monster_projectile_asset,Game_canvas.width*0.024)
+       Monster_projectile_asset = new Assets(document.getElementById(type_of_projectile),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y-Game_canvas.height*0.005,Game_canvas.width*0.023,Game_canvas.height*0.041)
+       Go_to_random_position(Monster_projectile_asset,Game_canvas.width*0.02)
    
      }
    
@@ -84,7 +123,7 @@ function Monster_encounter(){
        }
    
        function if_y_smaller_than_monster(){
-           if (sprite_to_move.x >= Asssigned_x_position && sprite_to_move.y <= Assigned_y_position){ //när sprite'n har kommit till sin destination stannar den
+           if (sprite_to_move.x > Asssigned_x_position && sprite_to_move.y < Assigned_y_position){ //när sprite'n har kommit till sin destination stannar den och försvinner genom att bli en tom bild
                clearInterval(Monster_walking_interval)
                ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
                Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
@@ -98,7 +137,7 @@ function Monster_encounter(){
            else{sprite_to_move.update()}
        }
        function if_x_smaller_than_monster(){
-           if (sprite_to_move.x <= Asssigned_x_position && sprite_to_move.y >= Assigned_y_position){
+           if (sprite_to_move.x < Asssigned_x_position && sprite_to_move.y > Assigned_y_position){
                clearInterval(Monster_walking_interval)
                ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
                Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
@@ -112,7 +151,7 @@ function Monster_encounter(){
            else{sprite_to_move.update()}
        }
        function if_both_smaller_than_monster(){
-           if (sprite_to_move.x <= Asssigned_x_position && sprite_to_move.y <= Assigned_y_position){
+           if (sprite_to_move.x < Asssigned_x_position && sprite_to_move.y < Assigned_y_position){
                clearInterval(Monster_walking_interval)
                ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
                Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
@@ -127,7 +166,7 @@ function Monster_encounter(){
            
        }
        function if_both_bigger_than_monster(){
-           if (sprite_to_move.x >= Asssigned_x_position && sprite_to_move.y >= Assigned_y_position){
+           if (sprite_to_move.x > Asssigned_x_position && sprite_to_move.y > Assigned_y_position){
               clearInterval(Monster_walking_interval)
               ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
               Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
@@ -142,6 +181,32 @@ function Monster_encounter(){
            
        }
    }
+     function Necromancer_projectile(){
+      Current_monster.sy = 1640
+      Current_monster.sx = 0
+      Monster_Current_frame = -1
+      Monster_Frame_to_end_with = 7
+      Monster_animation_times_repeated = 1
+      clearInterval(Monster_interval)
+      Monster_interval = setInterval(Monster_animation,120)
+      setTimeout(interval_has_started,500); 
+      function interval_has_started(){ 
+        Monster_projectile_asset = new Assets(document.getElementById("Necromancer_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.13,Game_canvas.width*0.023,Game_canvas.height*0.041)
+        Monster_projectile_asset_2 = new Assets(document.getElementById("Necromancer_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.13,Game_canvas.width*0.023,Game_canvas.height*0.041)
+        Monster_projectile_asset_3 = new Assets(document.getElementById("Necromancer_projectile"),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y+Game_canvas.height*0.13,Game_canvas.width*0.023,Game_canvas.height*0.041)
+        Monster_projectile_interval = setInterval(Necromancer_assign_projectile,100)}
+
+      function Necromancer_assign_projectile(){
+        Fire_projectile(Monster_projectile_asset,0,-Game_canvas.width*0.017,-10,0,0,10)
+        Fire_projectile(Monster_projectile_asset_2,Game_canvas.width*0.012,Game_canvas.width*0.012,0,-10,10,0)
+        Fire_projectile(Monster_projectile_asset_3,-Game_canvas.width*0.012,Game_canvas.width*0.012,0,-10,10,0)
+
+        if (Monster_projectile_asset.y > 0 && Monster_projectile_asset_2.x > Game_canvas.width && Monster_projectile_asset_3.x < 0){  
+            clearInterval(Monster_projectile_interval)
+            return
+        }
+     }
+    }
    
      function Devil_Projectile(){
        Current_monster.sy = 1320
@@ -176,7 +241,7 @@ function Monster_encounter(){
            Current_monster.Monster_update()
            type.update()
    }
-   }
+  }
    else{Monster_death(); return}
 
 
@@ -191,24 +256,25 @@ function Monster_encounter(){
        Monster_Frame_to_end_with = 6
        Monster_animation_times_repeated = 1
        Monster_interval = setInterval(Monster_animation,100)
+       Monster_defeated_counter ++
      }
 
      function Monster_animation(){
        Monster_Current_frame++
        ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
-       Current_monster.sx = 620 * Monster_Current_frame
+       Current_monster.sx = 616 * Monster_Current_frame
        Current_monster.Monster_update()
        if (Monster_Current_frame === Monster_Frame_to_end_with){
            if (Monster_animation_times_repeated === 1){
                clearInterval(Monster_interval)
-               if (Monster_death_active === false){requestAnimationFrame(Idle)}
+               if (Monster_death_active === false){Idle()}
                else{Current_monster = new Karaktär(document.getElementById("Empty_image"), 0, 0, 0, 0, 0, 0,0,0,0);Monster_death_active = false; return}
            }
+           Current_monster.sy = 0
            ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
            Current_monster.sx = 0
            Current_monster.Monster_update()
            Monster_Current_frame = 0
        }
      }
-   
- }
+    }
