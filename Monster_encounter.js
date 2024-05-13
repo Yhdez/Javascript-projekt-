@@ -18,31 +18,41 @@ function assign_monster(type){
      Current_monster = Phantom
     }
     if (type === 3){
+      var Mimic = new Karaktär(document.getElementById("Chest"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.42, Game_canvas.width*0.2, Game_canvas.height*0.38,0,1200,12)
+      Current_monster = Mimic
+    }
+    if (type === 4){
       var Necromancer = new Karaktär(document.getElementById("Necromancer"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.38,0,0,15)
       Current_monster = Necromancer
     }
    }
 
 function Monster_encounter(){
-    if(Current_monster.health > 0){
+  if(Current_monster.health > 0){
        clearInterval(Monster_interval)
-     if (Current_monster.type === document.getElementById("Devil")){ 
+    if (Current_monster.type === document.getElementById("Devil")){  //Djävulens attack mönster
         Idle()
         setTimeout(Run_and_swing,(Math.random() * 1000) + 1500)
         setTimeout(Devil_Projectile,7500)
         setTimeout(Monster_encounter.bind(null,Current_monster),9500)
 
      }
-     if (Current_monster.type === document.getElementById("Phantom")){
-       requestAnimationFrame(Idle)
+    if (Current_monster.type === document.getElementById("Phantom")){ //Fantomens attack mönster
+       Idle()
        Assigned_y_position = (Math.random() * Game_canvas.height*0.358) + Game_canvas.height*0.32
        Asssigned_x_position = (Math.random() * Game_canvas.width*0.7) + Game_canvas.width*0.0235
-       setTimeout(Go_to_random_position(Current_monster,12),(Math.random() * 1000) + 1500)
+       setTimeout(Go_to_position(Current_monster,12),(Math.random() * 1000) + 1500)
        setTimeout(shoot_following_projectile.bind(null,"Phantom_projectile"),(Math.random() * 1000) + 4500)
        setTimeout(Monster_encounter.bind(null,Current_monster),11000)
      }
 
-     if (Current_monster.type === document.getElementById("Necromancer")){
+    if (Current_monster.type === document.getElementById("Chest") && Mimic_is_attacking === true){ //Mimics attack mönster
+        Idle()
+        Chase_player()
+        setTimeout(Monster_encounter.bind(null,Current_monster),7000)
+     }
+
+    if (Current_monster.type === document.getElementById("Necromancer")){ //Nekromantikerns attack mönster
           Idle()
           setTimeout(shoot_following_projectile.bind(null,"Necromancer_projectile"),(Math.random() * 1000) + 2000)
           setTimeout(Teleport,7500)
@@ -50,7 +60,7 @@ function Monster_encounter(){
           setTimeout(Monster_encounter.bind(null,Current_monster),16500)
      }
    
-     function Idle(){
+    function Idle(){
        Monster_animation_times_repeated = "Indefinitely"
        Current_monster.sy = 0
        Monster_Current_frame = -1
@@ -58,10 +68,10 @@ function Monster_encounter(){
        Monster_interval = setInterval(Monster_animation,150)
       }
    
-     function Run_and_swing(){
+    function Run_and_swing(){ //Djävul förmåga
        Assigned_y_position = (Math.random() * Game_canvas.height*0.358) + Game_canvas.height*0.32
        Asssigned_x_position = (Math.random() * Game_canvas.width*0.7) + Game_canvas.width*0.0235
-       Go_to_random_position(Current_monster,Game_canvas.width*0.022)
+       Go_to_position(Current_monster,Game_canvas.width*0.022)
        Current_monster.sy = 600
        Monster_Current_frame = -1
        Monster_Frame_to_end_with = 7
@@ -70,7 +80,7 @@ function Monster_encounter(){
        Monster_interval = setInterval(Monster_animation,150)
      }
 
-     function Teleport(){
+    function Teleport(){ //Nekromantiker förmåga
       clearInterval(Monster_interval)
       Current_monster.sy = 1100
       Monster_Current_frame = -1
@@ -89,30 +99,25 @@ function Monster_encounter(){
         Monster_interval = setInterval(Monster_animation,200)
       }
      }
-   
-     function shoot_following_projectile(type_of_projectile){
-      if (Current_monster.type === document.getElementById("Phantom")){
-        Current_monster.sy = 600
+
+    function Chase_player(){
+       Assigned_y_position = Spelkaraktär.y - Game_canvas.height*0.07
+       Asssigned_x_position = Spelkaraktär.x - Game_canvas.width*0.01
+       Go_to_position(Current_monster,Game_canvas.width*0.007)
+       setTimeout(Stop_chasing_player,4500)
+       function Stop_chasing_player(){ // Startar hans utmatad animation, samt avbryter Go_to_position() funktionnen 
+        console.log("stop")
+        clearInterval(Monster_walking_interval)
+        clearInterval(Monster_interval)
+        Current_monster.sy = 580
         Monster_Current_frame = -1
-        Monster_Frame_to_end_with = 6
+        Monster_Frame_to_end_with = 4
+        Monster_animation_times_repeated = "Indefinitive"
+        Monster_interval = setInterval(Monster_animation,200)
       }
-      if (Current_monster.type === document.getElementById("Necromancer")){
-        Current_monster.sy = 550
-        Monster_Current_frame = -1
-        Monster_Frame_to_end_with = 5
-      }
-       Monster_animation_times_repeated = 1
-       clearInterval(Monster_interval)
-       Monster_interval = setInterval(Monster_animation,150)
-       clearInterval(Monster_walking_interval)
-       Assigned_y_position = Spelkaraktär.y + Game_canvas.height*0.1
-       Asssigned_x_position = Spelkaraktär.x + Game_canvas.width*0.08
-       Monster_projectile_asset = new Assets(document.getElementById(type_of_projectile),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y-Game_canvas.height*0.001,Game_canvas.width*0.023,Game_canvas.height*0.041)
-       Go_to_random_position(Monster_projectile_asset,Game_canvas.width*0.02)
-   
-     }
-   
-     function Go_to_random_position(sprite_to_move,speed){
+    }
+
+    function Go_to_position(sprite_to_move,speed){
        if (sprite_to_move.y <= Assigned_y_position){
            if (sprite_to_move.x <= Asssigned_x_position){Monster_walking_interval = setInterval(if_both_bigger_than_monster,150)} //Current_monster.x och y är på motsatt sida ifrån de givna koordinaterna
            else{Monster_walking_interval = setInterval(if_x_smaller_than_monster ,150)}
@@ -132,6 +137,7 @@ function Monster_encounter(){
            ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
            if(sprite_to_move.x < Asssigned_x_position){sprite_to_move.x += speed}
            if (sprite_to_move.y > Assigned_y_position){sprite_to_move.y -= speed}
+
            is_player_hit(sprite_to_move)
            if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
            else{sprite_to_move.update()}
@@ -160,6 +166,7 @@ function Monster_encounter(){
            ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
            if(sprite_to_move.x > Asssigned_x_position){sprite_to_move.x -= speed}
            if (sprite_to_move.y > Assigned_y_position){sprite_to_move.y -= speed}
+
            is_player_hit(sprite_to_move)
            if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
            else{sprite_to_move.update()}
@@ -175,13 +182,40 @@ function Monster_encounter(){
        ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
            if(sprite_to_move.x < Asssigned_x_position){sprite_to_move.x += speed}
            if (sprite_to_move.y < Assigned_y_position){sprite_to_move.y += speed}
+
            is_player_hit(sprite_to_move)
            if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
            else{sprite_to_move.update()}
            
        }
    }
-     function Necromancer_projectile(){
+   
+
+   
+   
+      function shoot_following_projectile(type_of_projectile){ //fantom och nekromantiker förmåga
+         if (Current_monster.type === document.getElementById("Phantom")){
+          Current_monster.sy = 600
+          Monster_Current_frame = -1
+          Monster_Frame_to_end_with = 6
+          }
+         if (Current_monster.type === document.getElementById("Necromancer")){
+          Current_monster.sy = 550
+          Monster_Current_frame = -1
+          Monster_Frame_to_end_with = 5
+          }
+        Monster_animation_times_repeated = 1
+        clearInterval(Monster_interval)
+        Monster_interval = setInterval(Monster_animation,150)
+        clearInterval(Monster_walking_interval)
+        Assigned_y_position = Spelkaraktär.y + Game_canvas.height*0.1
+        Asssigned_x_position = Spelkaraktär.x + Game_canvas.width*0.08
+        Monster_projectile_asset = new Assets(document.getElementById(type_of_projectile),Current_monster.x+Game_canvas.width*0.1 ,Current_monster.y-Game_canvas.height*0.001,Game_canvas.width*0.023,Game_canvas.height*0.041)
+        Go_to_position(Monster_projectile_asset,Game_canvas.width*0.02)
+      }
+
+
+     function Necromancer_projectile(){ //nekromantiker förmåga
       Current_monster.sy = 1640
       Current_monster.sx = 0
       Monster_Current_frame = -1
@@ -209,7 +243,7 @@ function Monster_encounter(){
      }
     }
    
-     function Devil_Projectile(){
+    function Devil_Projectile(){ //djävul förmåga
        Current_monster.sy = 1320
        Current_monster.sx = 0
        Monster_Current_frame = -1
@@ -234,7 +268,7 @@ function Monster_encounter(){
    
        }
    
-       function Fire_projectile(type, speed_x, speed_y, y_space, x_space, width_space, height_space){ //space variablen är för att se till att clearrect() tar bort hela bilden
+    function Fire_projectile(type, speed_x, speed_y, y_space, x_space, width_space, height_space){ //space variablen är för att se till att clearrect() tar bort hela bilden
            ctx.clearRect(type.x +x_space,type.y + y_space,type.width+width_space,type.height+height_space)
            type.x += speed_x
            type.y += speed_y
@@ -243,10 +277,10 @@ function Monster_encounter(){
            type.update()
    }
   }
-   else{Monster_death(); return}
+  else{Monster_death(); return}
 
 
-     function Monster_death(){
+    function Monster_death(){
        if (Current_monster.type === document.getElementById("Necromancer")){setTimeout(End_scene,2500)} //Då nekromantikern är den slutgiltiga bossen, aktiveras end_scene funktionen, vilket är slutet av spelet
        Monster_death_active = true
        clearInterval(Monster_interval)
@@ -258,10 +292,11 @@ function Monster_encounter(){
        Monster_Frame_to_end_with = 6
        Monster_animation_times_repeated = 1
        Monster_interval = setInterval(Monster_animation,100)
+       Mimic_is_attacking = false
        Monster_defeated_counter ++
      }
 
-     function Monster_animation(){
+    function Monster_animation(){
        Monster_Current_frame++
        ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
        Current_monster.sx = 616 * Monster_Current_frame
@@ -272,7 +307,7 @@ function Monster_encounter(){
                if (Monster_death_active === false){Idle()}
                else{Current_monster = new Karaktär(document.getElementById("Empty_image"), 0, 0, 0, 0, 0, 0,0,0,0);Monster_death_active = false; return}
            }
-           Current_monster.sy = 0
+           //Current_monster.sy = 0
            ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
            Current_monster.sx = 0
            Current_monster.Monster_update()

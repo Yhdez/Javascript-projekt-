@@ -12,16 +12,20 @@ var Monster_defeated_counter = 0
 
 var Player_animation_active = false
 var player_attack_active = false
+var Mimic_is_attacking = false
 var Time_when_invincibility_frame_activated = null
 var Time_when_enemy_invincibility_frame_activated = null
 var Time_when_player_attacked = null
 var Times_moved_counter = 0
 var Times_attacked_counter = 0
 
+var chest_status = "Unopened"
 var invinciblity_frame_mode = "inactive"
 var enemy_invinicbility_frame_mode = "inactive"
+var God_mode = "inactive"
 
 var Player_is_touching_door = false
+var player_is_touching_chest = false
 var End_scene_active = false
 
 function Karaktär(type,swidth,sheight,x,y,width,height,sx,sy,health) {
@@ -130,7 +134,7 @@ function is_player_hit(object){
     if (object === Current_monster){
       if(Current_monster.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Current_monster.x + Game_canvas.width*0.2 >  Spelkaraktär.x + Game_canvas.width*0.125){
         if (Current_monster.y + Game_canvas.height*0.02 < Spelkaraktär.y + Game_canvas.height*0.11 && Current_monster.y + Game_canvas.height*0.4 >  Spelkaraktär.y + Game_canvas.height*0.28){
-            hit()
+            if ((Current_monster.type === document.getElementById("Chest") && Mimic_is_attacking === true) || (Current_monster.type !== document.getElementById("Chest"))){hit()} // Alla monster förutom kistan som inte har blivit en mimic skadar spelaren
     }
     }
     }
@@ -159,7 +163,7 @@ function is_player_hit(object){
 
 function is_enemy_hit(){
     if(Player_attack.x + Game_canvas.width*0.04 < Current_monster.x + Game_canvas.width*0.125 && Player_attack.x + Game_canvas.width*0.08 > Current_monster.x + Game_canvas.width*0.){
-        if (Player_attack.y + Game_canvas.height*0.03 < Current_monster.y + Game_canvas.height*0.16 && Player_attack.y + Game_canvas.height*0.15 >   Current_monster.y + Game_canvas.height*0.07){
+        if (Player_attack.y + Game_canvas.height*0.03 < Current_monster.y + Game_canvas.height*0.16 && Player_attack.y + Game_canvas.height*0.18 >   Current_monster.y + Game_canvas.height*0.07){
             if (Date.now() - Time_when_enemy_invincibility_frame_activated >= 500){
                 Current_monster.health -= 1
                 Time_when_invincibility_frame_activated = Date.now()
@@ -179,12 +183,30 @@ function is_player_at_door(){
     if (Spelkaraktär.x + Game_canvas.width*0.06 < Game_canvas.width*0.48 && Spelkaraktär.x + Game_canvas.width*0.2 > Game_canvas.width*0.55){
         if (Spelkaraktär.y + Game_canvas.height*0.06 < Game_canvas.height*0.34 && Spelkaraktär.y + Game_canvas.height*0.2 > Game_canvas.height*0.24){
             Player_is_touching_door = true
-            if (Current_monster.type === document.getElementById("Empty_image")){tutorial("Open_door")}
+            if (Current_monster.type === document.getElementById("Empty_image") || (Current_monster.type === document.getElementById("Chest") && Mimic_is_attacking === false)){tutorial("Open_door")} //Eftersom dörren endast kan öppnas om monstret i rummet är besegrat eller ifall det är en vanlig kista i rummet
             else{tutorial("Locked_door")}
         }
         else{Player_is_touching_door = false;}
     }
     else{Player_is_touching_door = false;}
+}
+
+function is_player_at_chest(){
+  if( Current_monster.type === document.getElementById("Chest"))
+    if(Current_monster.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Current_monster.x + Game_canvas.width*0.2 >  Spelkaraktär.x + Game_canvas.width*0.125){
+        if (Current_monster.y + Game_canvas.height*0.04 < Spelkaraktär.y + Game_canvas.height*0.1 && Current_monster.y + Game_canvas.height*0.45 >  Spelkaraktär.y + Game_canvas.height*0.28){
+            if (Mimic_is_attacking === false && chest_status === "Unopened"){
+                player_is_touching_chest = true
+                tutorial("Open_chest")
+            }
+            else if (Mimic_is_attacking === false && chest_status === "Opened"){
+                player_is_touching_chest = true
+                tutorial("What_is_in_chest")
+            }
+        }
+        else{player_is_touching_chest = false}
+    }
+    else{player_is_touching_chest = false}
 }
 
 function Check_health(){
@@ -274,8 +296,9 @@ document.onkeydown = function(e){
     }
     switch (e.key){ //Spelaren försöker att öppna en dörr
         case "e":
-         if(Player_is_touching_door === true && Current_monster.type === document.getElementById("Empty_image")){ //Dörr öppnas endast ifall spelaren rör dören och det inte finns något monster i rummet allstå current_monster.type är en tom bild
+         if(Player_is_touching_door === true && (Current_monster.type === document.getElementById("Empty_image")) || (Player_is_touching_door === true && Current_monster.type === document.getElementById("Chest") && Mimic_is_attacking === false)){ //Dörr öppnas endast ifall spelaren rör dören och det inte finns något monster i rummet allstå current_monster.type är en tom bild. Det andra vilkoret är ifall monstret är en vanlig kista
             if (Rooms_explored_counter < 6){ 
+                Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0) 
                 ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
                 Spelkaraktär.y = Game_canvas.height*0.8
                   var randomized_room = Math.ceil(Math.random()*2)
@@ -283,8 +306,9 @@ document.onkeydown = function(e){
                   if (randomized_room === 2){Current_room = new Room("Bilder/Rooms/Vine_room.png",document.getElementById("Vines_room_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86)}
                   Current_monster.Monster_update()
                   Current_room.update_entire_room()
-                  assign_monster(Math.ceil((Math.random()*2)))
+                  assign_monster(Math.ceil((Math.random()*3))) //Slumpar vad nästa rum kommer att beröra
                   Monster_encounter()
+                  chest_status = "Unopened"
                   Rooms_explored_counter ++
             }
             else if (Rooms_explored_counter === 6){  //Spelaren har nått spelets sista rum och möter spelets slutboss, Nekromantikern
@@ -293,11 +317,24 @@ document.onkeydown = function(e){
                Current_room = Current_room = new Room("Bilder/Rooms/Throne_room_background.png",document.getElementById("Throne_room_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86)
                Current_monster.Monster_update()
                Current_room.update_entire_room()
-               assign_monster(3)
+               assign_monster(4)
                Monster_encounter()
                Rooms_explored_counter++
             }
         }
+         if (player_is_touching_chest === true && chest_status === "Unopened"){
+            let Chest_result = Math.ceil((Math.random()*2))
+            ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
+            if (Chest_result === 1){
+                chest_status = "Opened"
+                Current_monster.sx = 616
+                Current_monster.Monster_update()
+                Spelkaraktär.health += 3
+                if (Spelkaraktär.health > 5 && God_mode === "inactive"){Spelkaraktär.health = 5} //Ser till att spelaren inte kan ha mer än 5 liv, så länge inte gud läge är aktiverat
+
+            }
+            else{chest_status = "Opened";Mimic_is_attacking = true;Current_monster.health = 12; Monster_encounter()} // Strid påbörjas, mimic attackerar spelaren
+         }
     }
     switch (e.key){
         case "Enter":
@@ -306,6 +343,7 @@ document.onkeydown = function(e){
 
     switch (e.key){  //Ifall g trycks och spelaren inte är död, aktiveras gud läge, vilket gör dig praktiskt sätt odödlig
         case "g":
+            God_mode = "Active"
             if (Spelkaraktär.health > 0){ Spelkaraktär.health = 100}
     }
 
@@ -318,6 +356,7 @@ document.onkeydown = function(e){
     else if(Times_attacked_counter <= 6){tutorial("Fighting")} //Anger hur länge som det ska stå i text_canvas hur du slår
     else{tutorial("Empty canvas")} //Annars är Text_canvasens normala läge tom
     is_player_at_door() 
+    is_player_at_chest()
     is_player_hit(Current_monster)
     is_player_hit(Monster_projectile_asset)
     is_player_hit(Monster_projectile_asset_2)

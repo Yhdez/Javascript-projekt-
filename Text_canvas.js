@@ -31,8 +31,12 @@ function tutorial(Part_of_tutorial){
 
     }
     else if (Part_of_tutorial === "Walking"){ ctx_text.fillText("Press  w , a , s , d  to move",90,85)}
-    
+
     else if (Part_of_tutorial === "Fighting"){ctx_text.fillText("Press  z to Swing",180,85)}
+  
+    else if (Part_of_tutorial === "Open_chest"){ ctx_text.fillText("Press e to open chest",90,85)}
+
+    else if (Part_of_tutorial === "What_is_in_chest"){ ctx_text.fillText("You Healed for 3 health",125,85)}
 
     else if (Part_of_tutorial === "Open_door"){
         if(Rooms_explored_counter === 7){ctx_text.fillText("With the necromancer defeated, you admire the view",80,85)} //Då sista rummet inte innehåller en dörr är rummet annorluda än det vanligtvis är
