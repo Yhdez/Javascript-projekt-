@@ -129,8 +129,7 @@ function Room(type,wall_type,Top_border,Bottom_border,Left_border,right_border){
    }
 }
 
-function is_player_hit(object){
-    //Ifall träffad av monster
+function is_player_hit(object){ // Ser ifall spelarens sprite rör på det nuvarande monstret. Ifall monstret är en vanlig kista, alltså (Mimic_is_attacking === false) kommer inte hit() starta
     if (object === Current_monster){
       if(Current_monster.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Current_monster.x + Game_canvas.width*0.2 >  Spelkaraktär.x + Game_canvas.width*0.125){
         if (Current_monster.y + Game_canvas.height*0.02 < Spelkaraktär.y + Game_canvas.height*0.11 && Current_monster.y + Game_canvas.height*0.4 >  Spelkaraktär.y + Game_canvas.height*0.28){
@@ -138,14 +137,14 @@ function is_player_hit(object){
     }
     }
     }
-    else{ //för projektiler
+    else{ //Fungerar som den ovan, fast den ser ifall en projektil har träffat spelaren
       if(object.x - Game_canvas.width*0.1 < Spelkaraktär.x + Game_canvas.width*0. && object.x - Game_canvas.width*0.03>  Spelkaraktär.x + Game_canvas.width*0.0){
         if (object.y - Game_canvas.height*0.08 < Spelkaraktär.y + Game_canvas.height*0.1 && object.y + Game_canvas.height*0.32 >  Spelkaraktär.y + Game_canvas.height*0.3){
             hit()
     }
     }
     }
-    function hit(){
+    function hit(){ // Spelarens liv sänks med -1 health, om det var 1.7 sekunder sedan spelaren blev skadad. Under denna tid blir spelaren transparent (Vilket bestäms i Karaktär.update())
         if (Date.now() - Time_when_invincibility_frame_activated >= 1700){
             Spelkaraktär.health -= 1
             Check_health()
@@ -161,10 +160,10 @@ function is_player_hit(object){
     return
 }
 
-function is_enemy_hit(){
+function is_enemy_hit(){ // Ser ifall slash sprite'n rör vid det nuvarande monstret
     if(Player_attack.x + Game_canvas.width*0.04 < Current_monster.x + Game_canvas.width*0.125 && Player_attack.x + Game_canvas.width*0.08 > Current_monster.x + Game_canvas.width*0.){
         if (Player_attack.y + Game_canvas.height*0.03 < Current_monster.y + Game_canvas.height*0.16 && Player_attack.y + Game_canvas.height*0.18 >   Current_monster.y + Game_canvas.height*0.07){
-            if (Date.now() - Time_when_enemy_invincibility_frame_activated >= 500){
+            if (Date.now() - Time_when_enemy_invincibility_frame_activated >= 500){ //Ifall det var 0.5 sekunder eller mer, som attacken skadade monstret, skadas monstret med -1 health
                 Current_monster.health -= 1
                 Time_when_invincibility_frame_activated = Date.now()
                 enemy_invinicbility_frame_mode = "Active"
@@ -179,7 +178,7 @@ function is_enemy_hit(){
 }
 }
 
-function is_player_at_door(){
+function is_player_at_door(){ //Ser ifall Spelarens sprite rör vid en särskild illustration vid spelets bakgrund, nämligen en dörr.
     if (Spelkaraktär.x + Game_canvas.width*0.06 < Game_canvas.width*0.48 && Spelkaraktär.x + Game_canvas.width*0.2 > Game_canvas.width*0.55){
         if (Spelkaraktär.y + Game_canvas.height*0.06 < Game_canvas.height*0.34 && Spelkaraktär.y + Game_canvas.height*0.2 > Game_canvas.height*0.24){
             Player_is_touching_door = true
@@ -191,7 +190,7 @@ function is_player_at_door(){
     else{Player_is_touching_door = false;}
 }
 
-function is_player_at_chest(){
+function is_player_at_chest(){ //Fungerar likt is_player_hit() men ser ifall spelaren rör vid en kista (Vilket är en icke farlig current_monster). Den ritar upp i text_canvas att spelaren rör i kistan
   if( Current_monster.type === document.getElementById("Chest"))
     if(Current_monster.x + Game_canvas.width*0.01 < Spelkaraktär.x + Game_canvas.width*0.05 && Current_monster.x + Game_canvas.width*0.2 >  Spelkaraktär.x + Game_canvas.width*0.125){
         if (Current_monster.y + Game_canvas.height*0.04 < Spelkaraktär.y + Game_canvas.height*0.1 && Current_monster.y + Game_canvas.height*0.45 >  Spelkaraktär.y + Game_canvas.height*0.28){
@@ -209,7 +208,7 @@ function is_player_at_chest(){
     else{player_is_touching_chest = false}
 }
 
-function Check_health(){
+function Check_health(){ //Uppdaterar bilden av objektet som visar spelarens liv
         if (Spelkaraktär.health >= 5){Health_bar.sy = -50}
         if (Spelkaraktär.health === 4){Health_bar.sy = 837}
         if (Spelkaraktär.health === 3){Health_bar.sy = 1717}
@@ -220,29 +219,31 @@ function Check_health(){
        Health_bar.update_with_s()
 }
 
-function Player_death(){
-    ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
-    Game_canvas.style.backgroundImage = "";
-    Game_canvas.style.backgroundColor = "black";
+function Player_death(){ //Aktiveras när spelarens liv är 0 ifrån check_health(), den blir av med alla objekt och gör dem till toma bilder och byter ut bakgrunden emot en svart backgrund. Den kallar text_canvas funktionen som skapar en game_over scen
+    clearInterval(Monster_walking_interval)
     Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,-500,-200,0,0,0,0,0)  //För att monstret inte ska radera delar av game over scenen
     Spelkaraktär = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0) //För att inte spelarens sprite ska radera delar av game over scenen
     Current_room = new Room(document.getElementById("Empty_image"),0,0,0,0,0)
     Health_bar = new Assets(document.getElementById("Empty_image"),0,0,0,0,0)
-    tutorial("Game_over")
-}
-
-function End_scene(){
-    console.log("Slut")
-    End_scene_active = true
     ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
     Game_canvas.style.backgroundImage = "";
     Game_canvas.style.backgroundColor = "black";
-    Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0)  //För att monstret inte ska radera delar av game over scenen
-    Spelkaraktär = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,5) //För att inte spelarens sprite ska radera delar av game over scenen
+    tutorial("Game_over")
+}
+
+function End_scene(){ //Gör i princip samma sak som player_death(), fast anger end_scene_active till true som ser till att spelaren kan starta om spelet
+    End_scene_active = true
+    Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0)  //För att monstret inte ska radera delar av slut skärm scenen
+    Spelkaraktär = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,5) //För att inte spelarens sprite ska radera delar av slut skärm scenen
     Current_room = new Room(document.getElementById("Empty_image"),0,0,0,0,0)
     Health_bar = new Assets(document.getElementById("Empty_image"),0,0,0,0,0)
+    ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
+    Game_canvas.style.backgroundImage = "";
+    Game_canvas.style.backgroundColor = "black";
     tutorial("End_scene")
 }
+
+// Spelare Input 
 
 document.onkeydown = function(e){
     switch (e.key){
@@ -294,10 +295,10 @@ document.onkeydown = function(e){
               Player_animation("Attack")
             }
     }
-    switch (e.key){ //Spelaren försöker att öppna en dörr
+    switch (e.key){ //Spelaren försöker att öppna, tillgänglig när spelaren rör en dörr eller en kista
         case "e":
          if(Player_is_touching_door === true && (Current_monster.type === document.getElementById("Empty_image")) || (Player_is_touching_door === true && Current_monster.type === document.getElementById("Chest") && Mimic_is_attacking === false)){ //Dörr öppnas endast ifall spelaren rör dören och det inte finns något monster i rummet allstå current_monster.type är en tom bild. Det andra vilkoret är ifall monstret är en vanlig kista
-            if (Rooms_explored_counter < 6){ 
+            if (Rooms_explored_counter < 7){ 
                 Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0) 
                 ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
                 Spelkaraktär.y = Game_canvas.height*0.8
@@ -311,7 +312,7 @@ document.onkeydown = function(e){
                   chest_status = "Unopened"
                   Rooms_explored_counter ++
             }
-            else if (Rooms_explored_counter === 6){  //Spelaren har nått spelets sista rum och möter spelets slutboss, Nekromantikern
+            else if (Rooms_explored_counter === 7){  //Spelaren har nått spelets sista rum och möter spelets slutboss, Nekromantikern
                ctx.clearRect(0,0,Game_canvas.width,Game_canvas.height)
                Spelkaraktär.y = Game_canvas.height*0.8
                Current_room = Current_room = new Room("Bilder/Rooms/Throne_room_background.png",document.getElementById("Throne_room_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86)
@@ -350,23 +351,28 @@ document.onkeydown = function(e){
     ctx.clearRect(Spelkaraktär.x,Spelkaraktär.y,Spelkaraktär.width,Spelkaraktär.height)
     Spelkaraktär.update()
     Current_monster.Monster_update()
-    if (player_attack_active === true){Player_attack.update_with_s()}
+    if (player_attack_active === true){Player_attack.update_with_s()} //Ifall spelaren slår, kommer den att ritas upp annars gör den inte detta
 
-    if(Times_moved_counter <= 8){tutorial("Walking")}  //Anger hur länge som det ska stå i text_canvas hur du går
-    else if(Times_attacked_counter <= 6){tutorial("Fighting")} //Anger hur länge som det ska stå i text_canvas hur du slår
-    else{tutorial("Empty canvas")} //Annars är Text_canvasens normala läge tom
+    if(Times_moved_counter <= 8){tutorial("Walking")}  //Anger hur länge som det ska stå i text_canvas, hur spelaren går
+    else if(Times_attacked_counter <= 6){tutorial("Fighting")} //Anger hur länge som det ska stå i text_canvas, hur spelaren slår
+    else{tutorial("Empty canvas")} //Ifall båda av dessa är avklarade, är text_canvas tom
+
+    //Vid varje tryck av en knapp, vart spelarens position är, relativt med andra objekt
     is_player_at_door() 
     is_player_at_chest()
     is_player_hit(Current_monster)
     is_player_hit(Monster_projectile_asset)
     is_player_hit(Monster_projectile_asset_2)
     is_player_hit(Monster_projectile_asset_3)
+
     Current_room.update()
     Check_health()
 } 
 
+//Spelare Animation 
+
 function Player_animation(Character_action){
-    if (Player_animation_active) return;
+    if (Player_animation_active) return; // Ser till att animationen inte kan bli kallad när den redan är i gång
     if (Character_action === "Walking"){
         Times_moved_counter++
         var Current_frame = 0
@@ -413,7 +419,7 @@ function Player_animation(Character_action){
             return
         }
     }
-    function slash_animation(){ //Attack för warrior classen
+    function slash_animation(){ // Aktiveras när spelaren trycker på z och skapar ett objekt framför spelaren
         slash_current_frame++
         ctx.clearRect(Player_attack.x,Player_attack.y,Player_attack.width,Player_attack.height)
         Player_attack.sx += 350
@@ -434,23 +440,27 @@ function Player_animation(Character_action){
 
 }
     // Del som startar om sidan ifall den är inaktiv för länge, för att kompensera för liten användning av requestanimationframe()
+    
     function Reload_game(){location.reload()}
-    function reset_timer(){clearTimeout(Timeoutid);Timeoutid = setTimeout(Reload_game,30000)}
-    var Timeoutid = setTimeout(Reload_game,25000)
+    var Timeoutid = setTimeout(Reload_game,35000)
+    function reset_timer(){clearTimeout(Timeoutid);Timeoutid = setTimeout(Reload_game,35000)}
     document.addEventListener("mousemove",reset_timer)
     document.addEventListener("scroll",reset_timer)
     document.addEventListener("keydown",reset_timer)
-
+    
      
+    //Här definerar objekt som behöver vara definerade vid spelets början, dessa uttnytjar constructorerna längst upp i filen, den uppdatterar även objekt för att de ska vara ritande vid spelets början
+
     var Spelkaraktär = new Karaktär(Warrior_spelkaraktären_bild, 760, 760, Game_canvas.width*0.4, Game_canvas.height*0.4, Game_canvas.width*0.2, Game_canvas.height*0.35,0,0,5);
     var Current_monster = new Karaktär(document.getElementById("Empty_image"),0,0,0,0,0,0,0,0,0)
     var Health_bar = new Assets(Health_bild,Game_canvas.width *0.74,-Game_canvas.height*0.02,Game_canvas.width*0.26,Game_canvas.height*0.34, Health_bild.width,Health_bild.height / 4.5)
     var Monster_projectile_asset = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Monster_projectile_asset_2 = new Assets(document.getElementById("Empty_image",0,0,0,0))
     var Monster_projectile_asset_3 = new Assets(document.getElementById("Empty_image",0,0,0,0))
-    
     var Player_attack = new Assets(document.getElementById("Slash"), 700, 100, Game_canvas.width*0.3/1.7, Game_canvas.height*0.3,350,480,50,-15)
     var Current_room = new Room("Bilder/Rooms/Main_Dungeon_background.png",document.getElementById("Main_Dungeon_walls"),Game_canvas.height*0.24,Game_canvas.height*0.78,-35,Game_canvas.width*0.86) //Game_canvas.height = 559 och .width = 1280
+
+
     Current_room.update_entire_room()
     Check_health()
     Spelkaraktär.update()
