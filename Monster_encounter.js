@@ -17,11 +17,11 @@ function assign_monster(type){ //Specificerar monster_typen som spelaren kommer 
      var Phantom = new Karaktär(document.getElementById("Phantom"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.32,0,0,6)
      Current_monster = Phantom
     }
-    if (type === 3){
-      var Mimic = new Karaktär(document.getElementById("Chest"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.42, Game_canvas.width*0.2, Game_canvas.height*0.38,0,1200,12) // Mimic kommer inte starta sitt monster attack mönster i monster_encounter förrän spelaren har tryckt på kistan och kanske sätter Mimic_is_attacking till true
+    if (type === 3){  // Mimic kommer inte starta sitt monster attack mönster i monster_encounter förrän spelaren har tryckt på kistan och kanske sätter Mimic_is_attacking till true
+      var Mimic = new Karaktär(document.getElementById("Chest"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.42, Game_canvas.width*0.2, Game_canvas.height*0.38,0,1200,12)
       Current_monster = Mimic
     }
-    if (type === 4){
+    if (type === 4){ // Type är endast 4 om current_room === 8, alltså spelets sista rum
       var Necromancer = new Karaktär(document.getElementById("Necromancer"), 600, 600, Game_canvas.width*0.37, Game_canvas.height*0.3, Game_canvas.width*0.2, Game_canvas.height*0.38,0,0,20)
       Current_monster = Necromancer
     }
@@ -34,7 +34,7 @@ function Monster_encounter(){
         Idle()
         setTimeout(Run_and_swing,(Math.random() * 1000) + 1500)
         setTimeout(Devil_Projectile,7500)
-        setTimeout(Monster_encounter.bind(null,Current_monster),9500)
+        setTimeout(Monster_encounter.bind(null,Current_monster),9500) //Återupprepar attack monstret, så länge inte Current_monster.health är 0 eller mindre
 
      }
     if (Current_monster.type === document.getElementById("Phantom")){ //Fantomens attack mönster
@@ -88,7 +88,7 @@ function Monster_encounter(){
       Monster_animation_times_repeated = 1
       Monster_interval = setInterval(Monster_animation,200)
       setTimeout(switch_position,900)
-      function switch_position(){
+      function switch_position(){ //Slumpar en position och sprite'n ritas där
         ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
         Current_monster.x = (Math.random() * Game_canvas.width*0.7) + Game_canvas.width*0.0235
         Current_monster.y = (Math.random() * Game_canvas.height*0.358) + Game_canvas.height*0.32
@@ -134,11 +134,11 @@ function Monster_encounter(){
                return
            }
            ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
-           if(sprite_to_move.x < Asssigned_x_position){sprite_to_move.x += speed}
-           if (sprite_to_move.y > Assigned_y_position){sprite_to_move.y -= speed}
+           if(sprite_to_move.x <= Asssigned_x_position){sprite_to_move.x += speed}
+           if (sprite_to_move.y >= Assigned_y_position){sprite_to_move.y -= speed}
 
            is_player_hit(sprite_to_move)
-           if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
+           if (sprite_to_move === Current_monster){Current_monster.Monster_update()} //Då projektiler och current_monster har olika benämda .update namn, krävs det att den ser vilket typ av objekt som flyttas
            else{sprite_to_move.update()}
        }
        function if_x_smaller_than_monster(){
@@ -149,8 +149,8 @@ function Monster_encounter(){
                return
            }
            ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
-           if(sprite_to_move.x > Asssigned_x_position){sprite_to_move.x -= speed}
-           if (sprite_to_move.y < Assigned_y_position){sprite_to_move.y += speed}
+           if(sprite_to_move.x >= Asssigned_x_position){sprite_to_move.x -= speed}
+           if (sprite_to_move.y <= Assigned_y_position){sprite_to_move.y += speed}
            is_player_hit(sprite_to_move)
            if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
            else{sprite_to_move.update()}
@@ -163,8 +163,8 @@ function Monster_encounter(){
                return
            }
            ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
-           if(sprite_to_move.x > Asssigned_x_position){sprite_to_move.x -= speed}
-           if (sprite_to_move.y > Assigned_y_position){sprite_to_move.y -= speed}
+           if(sprite_to_move.x >= Asssigned_x_position){sprite_to_move.x -= speed}
+           if (sprite_to_move.y >= Assigned_y_position){sprite_to_move.y -= speed}
 
            is_player_hit(sprite_to_move)
            if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
@@ -179,8 +179,8 @@ function Monster_encounter(){
               return
        }
        ctx.clearRect(sprite_to_move.x,sprite_to_move.y,sprite_to_move.width,sprite_to_move.height)
-           if(sprite_to_move.x < Asssigned_x_position){sprite_to_move.x += speed}
-           if (sprite_to_move.y < Assigned_y_position){sprite_to_move.y += speed}
+           if(sprite_to_move.x <= Asssigned_x_position){sprite_to_move.x += speed}
+           if (sprite_to_move.y <= Assigned_y_position){sprite_to_move.y += speed}
 
            is_player_hit(sprite_to_move)
            if (sprite_to_move === Current_monster){Current_monster.Monster_update()}
@@ -193,6 +193,7 @@ function Monster_encounter(){
    
    
       function shoot_following_projectile(type_of_projectile){ //fantom och nekromantiker förmåga, fungerar som chase_player() fast monstret skapar en projektil som går till spelarens tidigaste position
+        //Då Nekromantikern och Fantomen har olika animationer får de olika värden för Monster_animation()
          if (Current_monster.type === document.getElementById("Phantom")){
           Current_monster.sy = 600
           Monster_Current_frame = -1
@@ -304,7 +305,7 @@ function Monster_encounter(){
        if (Monster_Current_frame === Monster_Frame_to_end_with){
            if (Monster_animation_times_repeated === 1){
                clearInterval(Monster_interval)
-               if (Monster_death_active === false){Idle()}
+               if (Monster_death_active === false){Idle()} //Ifall monstret inte ska dö, återupprepar monstret sin idle animation
                else{Current_monster = new Karaktär(document.getElementById("Empty_image"), 0, 0, 0, 0, 0, 0,0,0,0);Monster_death_active = false; return} //Ifall monstret dör, blir monstret en tom bild
            }
            ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
