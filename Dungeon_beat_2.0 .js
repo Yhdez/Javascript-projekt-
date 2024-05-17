@@ -167,7 +167,7 @@ function is_enemy_hit(){ // Ser ifall slash sprite'n rör vid det nuvarande mons
         if (Player_attack.y + Game_canvas.height*0.03 < Current_monster.y + Game_canvas.height*0.16 && Player_attack.y + Game_canvas.height*0.18 >   Current_monster.y + Game_canvas.height*0.07){
             if (Date.now() - Time_when_enemy_invincibility_frame_activated >= 500){ //Ifall det var 0.5 sekunder eller mer, som attacken skadade monstret, skadas monstret med -1 health och får en invincibility_frame i 0.4 sekunder
                 Current_monster.health -= 1
-                Time_when_invincibility_frame_activated = Date.now()
+                Time_when_enemy_invincibility_frame_activated = Date.now()
                 enemy_invinicbility_frame_mode = "Active"
                 setTimeout(Turn_of_invincibilty_frame,400)
                 ctx.clearRect(Current_monster.x,Current_monster.y,Current_monster.width,Current_monster.height)
